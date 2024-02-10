@@ -48,8 +48,6 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
      "cmd": "client_authenication",
      "username": "",
      "sessionID": "",
-     "addr_host": "",
-     "addr_port": "",
      "hwid": "",
      "client_name": "",
      "client_version": ""
@@ -76,8 +74,6 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 {
      "sessionID": "",
      "hwid": "",
-     "addr_host": "",
-     "addr_ip": "",
      "cmd": "user_friend_req", 
      "from_userid": "",
      "to_userid": "",
@@ -105,8 +101,6 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 {
      "sessionID": "",
      "hwid": "",
-     "addr_host": "",
-     "addr_ip": "",
      "cmd": "user_dm_msg", 
      "from_userid": "",
      "to_userid": "",
@@ -134,8 +128,6 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 {
      "sessionID": "",
      "hwid": "",
-     "addr_host": "",
-     "addr_ip": "",
      "cmd": "user_dm_msg_rm", 
      "from_userid": "",
      "to_userid": "",
@@ -163,8 +155,6 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 {
      "sessionID": "",
      "hwid": "",
-     "addr_host": "",
-     "addr_ip": "",
      "cmd": "user_dm_react", 
      "from_userid": "",
      "to_userid": "",
