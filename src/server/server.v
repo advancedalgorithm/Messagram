@@ -66,8 +66,9 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	c.write_string("[ + ] Welcome to Messagram Server v0.0.1\n") or { 0 }
 	login := reader.read_line() or { "" }
 
+	println(login)
 	if !login.starts_with("{") && !login.ends_with("}") {
-		println("[ X ] Error, Invalid login data provided....!\r\n\t=> Disconnecting user " + c.peer_ip() or { "" })
+		println("[ X ] Error, Invalid login data provided....!\r\n\t=> Disconnecting user " + c.peer_ip() or { "" } + "\r\n\t=>\r\n${login}")
 		c.close() or { net.TcpConn{} }
 		return 
 	}
@@ -97,7 +98,7 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	// Login Authenication
 }
 
-pub fn (mut m MessagramServer) command_handler(string login_data) 
+pub fn (mut m MessagramServer) command_handler(login_data string) 
 {
 
 }

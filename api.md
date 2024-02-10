@@ -27,7 +27,7 @@
 
 # How to login for client's SessionID
 
-<p>Request API's Login Endpoint to receive a sessionID client's for socket</p>
+<p>Request API's Login Endpoint to receive a sessionID for client's socket</p>
 <p>[GET-REQUEST]</p>
 
 ```
@@ -98,10 +98,10 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 
 ```
 {
+     "cmd": "user_dm_msg", 
+     "username": "",
      "sessionID": "",
      "hwid": "",
-     "cmd": "user_dm_msg", 
-     "from_userid": "",
      "to_userid": "",
      "data": "",
      "client_name": "",
