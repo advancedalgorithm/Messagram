@@ -72,12 +72,11 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 
 ```
 {
+     "cmd": "user_friend_req", 
+     "username": "",
      "sessionID": "",
      "hwid": "",
-     "cmd": "user_friend_req", 
-     "from_userid": "",
-     "to_userid": "",
-     "data": "",
+     "to_username": "",
      "client_name": "",
      "client_version": ""
 }
