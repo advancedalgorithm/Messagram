@@ -27,11 +27,13 @@
 
 # How to login for client's SessionID
 
-<p>Request API's Login Endpoint to receive a sessionID for socket</p>
-<p>[POST-REQUEST]</p>
+<p>Request API's Login Endpoint to receive a sessionID client's for socket</p>
+<p>[GET-REQUEST]</p>
+
 ```
 https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 ```
+
 <p>A sessionID will be the response if valid, None if invalid</p>
 <p>all the next commands will be through client's socket server!</p>
 
