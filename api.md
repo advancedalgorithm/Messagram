@@ -39,7 +39,9 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 
 ### How to connect to Messagram Server
 
-[CLIENT-TO-SERVER] Authenication JSON Request To Messagram Server From Client
+<p>[CLIENT-TO-SERVER] Authenication JSON Request To Messagram Server From Client</p>
+
+```
 {
      "cmd": "client_authenication",
      "username": "",
@@ -50,19 +52,25 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
      "client_name": "",
      "client_version": ""
 }
+```
 
-[SERVER-RESPONSE] Server Response
+<p>[SERVER-RESPONSE] Server Response<p>
+
+```
 {
     "status": "true", // return true on auth success, false on auth failure
     "resp_t": "user_resp", // user response, signal to allow cmd data for client output
     "data": "Successfully logged in" // data to output (OPTIONAL)
 }
+```
 
-All other commands contain JSON data that will be used to validate how legitimate is the request (real user request etc)
+<p>All other commands contain JSON data that will be used to validate how legitimate is the request (real user request etc)</p>
 
 ### How to send a user a friend request
 
-[CLIENT-TO-SERVER] Friend Request JSON Data to Messagram Server
+<p>[CLIENT-TO-SERVER] Friend Request JSON Data to Messagram Server</p>
+
+```
 {
      "sessionID": "",
      "hwid": "",
@@ -75,17 +83,23 @@ All other commands contain JSON data that will be used to validate how legitimat
      "client_name": "",
      "client_version": ""
 }
+```
 
-[SERVER-RESPONSE] Server Response
+<p>[SERVER-RESPONSE] Server Response</p>
+
+```
 {
     "status": "true", // return true on request success and false on request failure
     "resp_t": "user_resp", // user response, signal to allow cmd data for client output
     "data": "Request Sent" // output to user (optional)
 }
+```
 
 # How to send a DM message
 
-[CLIENT-TO-SERVER] Send DM Message JSON Data to Messagram Server
+<p>[CLIENT-TO-SERVER] Send DM Message JSON Data to Messagram Server</p>
+
+```
 {
      "sessionID": "",
      "hwid": "",
@@ -98,17 +112,23 @@ All other commands contain JSON data that will be used to validate how legitimat
      "client_name": "",
      "client_version": ""
 }
+```
 
-[SERVER-RESPONSE] Server Response
+<p>[SERVER-RESPONSE] Server Response</p>
+
+```
 {
     "status": "true", // return true on message success and false on message failure
     "resp_t": "user_resp", // user response, signal to allow cmd data for client output
     "data": "Message Sent" // output to user (optional)
 }
+```
 
 # How to send a DM message removal
 
-[CLIENT-TO-SERVER] Send DM Message JSON Data to Messagram Server
+<p>[CLIENT-TO-SERVER] Send DM Message JSON Data to Messagram Server</p>
+
+```
 {
      "sessionID": "",
      "hwid": "",
@@ -121,17 +141,23 @@ All other commands contain JSON data that will be used to validate how legitimat
      "client_name": "",
      "client_version": ""
 }
+```
 
-[SERVER-RESPONSE] Server Response
+<p>[SERVER-RESPONSE] Server Response</p>
+
+```
 {
     "status": "true", // return true on removal success and false on removal failure
     "resp_t": "user_resp", // user response, signal to allow cmd data for client output
     "data": "Message Removed" // output to user (optional)
 }
+```
 
 # How to send a DM reaction
 
-[CLIENT-TO-SERVER] Send DM Reaction JSON Data to Messagram Server
+<p>[CLIENT-TO-SERVER] Send DM Reaction JSON Data to Messagram Server</p>
+
+```
 {
      "sessionID": "",
      "hwid": "",
@@ -144,10 +170,14 @@ All other commands contain JSON data that will be used to validate how legitimat
      "client_name": "",
      "client_version": ""
 }
+```
 
-[SERVER-RESPONSE] Server Response
+<p>[SERVER-RESPONSE] Server Response</p>
+
+```
 {
     "status": "true", // return true on reaction success and false on reaction failure
     "resp_t": "user_resp", // user response, signal to allow cmd data for client output
     "data": "Reaction Sent" // output to user (optional)
 }
+```
