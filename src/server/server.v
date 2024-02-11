@@ -3,6 +3,7 @@ module server
 import io
 import net
 import x.json2 as jsn
+
 import src.db_utils as db
 
 pub struct MessagramServer
@@ -11,16 +12,19 @@ pub struct MessagramServer
 		host			string
 		port 			int = 666
 
+		users			[]db.User
 		clients			[]Client
 		main_socket 	net.TcpListener
 }
 
-pub fn start_messagram_server(mut m MessagramServer)
+pub fn start_messagram_server(mut m MessagramServer, mut users db.User)
 {
 	m.main_socket = net.listen_tcp(.ip6, ":${m.port}") or {
 		println("[ X ], Error, Unable to start server....!")
 		return
 	}
+
+	m.users = users
 
 	println("[ + ] Messagram server has been started....!")
 
@@ -90,32 +94,42 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 		return
 	}
 
-	cmd 		:= login_data['cmd'] or { "N/A" }
-	username 	:= login_data['username'] or { "N/A" }
-	sessionID	:= login_data['sessionID'] or { "N/A" }
-	hwid 		:= login_data['hwid'] or { "N/A" }
+	username 	:= login_data['username'] or { "" }
+	password 	:= login_data['password'] or { "" }
+	ip 		:= login_data['ip'] or { "" }
+	sid 		:= login_data['sid'] or { "" }
 
 	println("${username} ${password} ${ip} ${sid}")
 
 	// Login Authenication
+	mut user, auth_chk := m.authorize_user(username, password)
+
+	if !auth_chk {
+		c.write_string("{\"status\": \"false\", \"resp_t\": \"user_resp\", \"cmd_t\": \"INVALID_INFO\"}") or { 0 }
+		c.close() or { net.TcpConn{} }
+		return
+	}
+
+	c.write_string("{\"status\": \"true\", \"resp_t\": \"user_resp\", \"cmd_t\": \"SUCCESSFUL_LOGIN\"}") or { 0 }
+	command_handler(mut c)
 }
 
-pub fn (mut m MessagramServer) command_handler(login_data string) 
+pub fn (mut m MessagramServer) command_handler(login_data string)
 {
 
 }
 
-/*
-	[@DOC]
-	pub fn (mut m MessagramServer) add_session_key(sid string, username string) string
-
-	Generate a sessionID to return to user via API req to connect through a client
-*/
-pub fn (mut m MessagramServer) add_session_key(sid string, username string) string
+pub fn (mut m MessagramServer) find_profile(username) db.User
 {
-	// find user profile 
-	// generate a key to return 
-	// add sessionid to profile 
-	// append the profile to the MessagramServer struck
-	// wait for 60 seconds before terminating the sessionID 
+
+}
+
+pub fn (mut m MessagramServer) authorize_user(username string, password string) (db.User, bool)
+{
+	for mut user in m.users
+	{
+		if user.username == username && user.password == passwrd { return user, true }
+	}
+
+	return db.User, false
 }

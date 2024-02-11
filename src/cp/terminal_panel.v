@@ -28,20 +28,21 @@ pub fn prompt()
 	{
 		data := os.input(hostname)
 
-		if data.len < 2 { continue }
+		if data.len > 5 {
+			
+			args := data.split(" ")
+			cmd := args[0]
 
-		args := data.split(" ")
-		cmd := args[0]
+			match cmd
+			{
+				"help" {
+					println(help)
+				}
+				"start" {
 
-		match cmd
-		{
-			"help" {
-				println(help)
-			}
-			"start" {
-
-			} else {
-				continue
+				} else {
+					continue
+				}
 			}
 		}
 	}

@@ -20,7 +20,7 @@ pub fn build_messagram() Messagram
 	m.load_user_db()
 	m.load_all_communities()
 
-	go server.start_messagram_server(mut m.server)
+	go server.start_messagram_server(mut m.server, mut users)
 
 	return m
 }
@@ -66,4 +66,26 @@ pub fn (mut m Messagram) load_all_communities()
 		mut community_data := os.read_file("assets/db/communities/${file}") or { "" }
 
 	}
+}
+
+pub fn (mut m Messagram) find_profile(username string) db_utils.User
+{
+	for mut user in m.users 
+	{
+		if user.username == username {
+			return user
+		}
+	}
+
+	return db_utils.User{}
+}
+
+pub fn (mut m Messagram) authorize_user(username string, password string) db_utils.User
+{
+	for mut user in m.users
+	{
+		if user.username == username && user.password == password { return user }
+	}
+
+	return db_utils.User{}
 }
