@@ -4,6 +4,7 @@ import vweb
 
 import src
 import src.cp
+import src.db_utils as db
 
 pub struct MessagramAPI
 {
@@ -27,11 +28,18 @@ fn (mut api MessagramAPI) index() vweb.Result
 @['/auth']
 fn (mut api MessagramAPI) auth() vweb.Result
 {
-	uname := api.query['username'] or { "" }
-	pword := api.query['password'] or { "" }
-	hwid  := api.query['hwid'] or { "" }
+	username := api.query['username'] or { "" }
+	password := api.query['password'] or { "" }
+	hwid     := api.query['hwid']     or { "" }
 
 	lock api.messagram {
-		
+		user := api.messagram.authorize_user(username, password);
+		if user.is_empty() {
+			return api.text("")
+		}
+
+		sessionUUID := db.generated_uuid()
+
+		api.text(sessionUUID)
 	}
 }

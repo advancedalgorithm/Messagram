@@ -200,3 +200,27 @@ fn is_username_valid(username string) bool
 
 	return true
 }
+
+/*
+	[@DOC]
+
+	is_empty() bool
+
+	return weather a user is empty or not
+*/
+fn (mut u User) is_empty() bool 
+{
+	return u.user_id == 0
+}
+
+fn generate_uuid() string 
+{
+	blocked_chars := ['~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '=', '[', ']', '+', '_', '|', '\\', '/', '`', '\'', '\"', '<', '>', '/']
+	mut key := ""
+	for i in 0..32 {
+		num := rand.int_in_range(0, 9) or { 0 }
+		key += "${num}"
+	}
+
+	return key
+}
