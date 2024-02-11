@@ -3,20 +3,35 @@ module db_utils
 import rand
 import crypto.bcrypt
 
+import src.utils
+
 pub struct User
 {
 	pub mut:
-		username			string
+		/* 
+			Setting A Messagram Account Will Have 
+			('14126082735350331571202525063203','Jeff','admin@messagram.io','testpw123','5.5.5.5','NO_PHONE','1973','99')
+		*/
+		user_idx			int
 		user_id				string
+		username			string
 		email				string
 		password			string
+		ip_addr				string
+		sms_number			string
+		pin_code			string
+		messa_rank			int
 
 		hash                string
 
+		/*	
+			2FA Using Email and//or Phone Number
+		*/
 		twofa_toggle		bool
 		twofa 				string
 
-		trusted_systems		map[string]string
+		// 2D Array [ PC_NAME: [] ]
+		trusted_systems		map[string][]string
 }
 
 /*
@@ -52,13 +67,25 @@ pub enum TrustSystems_T
 */
 pub fn user(content string, new bool) User
 {
+	mut u := User{}
 	id := content.int()
 
 	if new {
-		if id > 0 && content.len == 32 {
-			
-		}
+		create(mut u, utils.rm_str(content, ['(', ')', '\'']).split(","))
 	}
+
+	return User{}
+}
+
+/*
+	[@DOC]
+
+	create(arr string) User
+
+	Used to create a new User Struct with information
+*/
+pub fn create(mut u User, arr []string) User 
+{
 	return User{}
 }
 

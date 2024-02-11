@@ -84,16 +84,18 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	*/
 	mut login_data := (jsn.raw_decode("${login}") or { jsn.Any{} }).as_map()
 
-	if "username" in login_data || "password" in login_data || "ip" in login_data || "sid" in login_data {
+	if "cmd" !in login_data || "username" !in login_data || "sessionID" !in login_data || "hwid" !in login_data {
 		println("[ X ] Error, Invalid JSON Response")
 		c.close() or { net.TcpConn{} }
 		return
 	}
 
-	username 	:= login_data['username'] or { "" }
-	password 	:= login_data['password'] or { "" }
-	ip 			:= login_data['ip'] or { "" }
-	sid 		:= login_data['sid'] or { "" }
+	cmd 		:= login_data['cmd'] or { "N/A" }
+	username 	:= login_data['username'] or { "N/A" }
+	sessionID	:= login_data['sessionID'] or { "N/A" }
+	hwid 		:= login_data['hwid'] or { "N/A" }
+
+	println("${username} ${password} ${ip} ${sid}")
 
 	// Login Authenication
 }
@@ -101,4 +103,19 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 pub fn (mut m MessagramServer) command_handler(login_data string) 
 {
 
+}
+
+/*
+	[@DOC]
+	pub fn (mut m MessagramServer) add_session_key(sid string, username string) string
+
+	Generate a sessionID to return to user via API req to connect through a client
+*/
+pub fn (mut m MessagramServer) add_session_key(sid string, username string) string
+{
+	// find user profile 
+	// generate a key to return 
+	// add sessionid to profile 
+	// append the profile to the MessagramServer struck
+	// wait for 60 seconds before terminating the sessionID 
 }
