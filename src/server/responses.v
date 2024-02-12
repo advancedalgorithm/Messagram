@@ -107,17 +107,97 @@ pub struct Response
 
 pub fn build_json_response(status bool, respt Resp_T, cmdt Cmd_T) Response
 {
-
+	return Response {
+		status: status,
+		resp_t: respt,
+		cmd_t: cmdt
+	}
 }
 
 pub fn resp2type(data string) Resp_T
 {
+	match data
+	{
+		"socket_connected" {
+			return Resp_T.socket_connected
+		}
+		"invalid_connection" {
+			return Resp_T.invalid_connection
+		}
+		"socket_rejected" {
+			return Resp_T.socket_rejected
+		}
+		"device_banned" {
+			return Resp_T.device_banned
+		}
+		"user_resp" {
+			return Resp_T.user_resp
+		}
+		"push_event" {
+			return Resp_T.push_event
+		}
+		"mass_event" {
+			return Resp_T.mass_event
+		}
+	}
 
+	return Resp_T._null
 }
 
-pub fn cmd2type(data string) Cmd_T
-{
+pub fn cmd2type(data string) Cmd_T {
+	match data {
+		"add_sms_auth" { return Cmd_T.add_sms_auth }
+		"add_new_email" { return Cmd_T.add_new_email }
+		"send_pin_verification_code" { return Cmd_T.send_pin_verification_code }
+		"send_sms_verification_code" { return Cmd_T.send_sms_verification_code }
+		"send_email_verification_code" { return Cmd_T.send_email_verification_code }
+		"send_friend_request" { return Cmd_T.send_friend_request }
+		"cancel_friend_request" { return Cmd_T.cancel_friend_request }
+		"send_dm_msg" { return Cmd_T.send_dm_msg }
+		"send_dm_msg_rm" { return Cmd_T.send_dm_msg_rm }
+		"send_dm_reaction" { return Cmd_T.send_dm_reaction }
+		"send_dm_react_rm" { return Cmd_T.send_dm_react_rm }
+		"create_community" { return Cmd_T.create_community }
+		"edit_community" { return Cmd_T.edit_community }
+		"inv_toggle" { return Cmd_T.inv_toggle }
+		"kick_user" { return Cmd_T.kick_user }
+		"ban_user" { return Cmd_T.ban_user }
+		"del_msg" { return Cmd_T.del_msg }
+		"create_community_role" { return Cmd_T.create_community_role }
+		"edit_community_role" { return Cmd_T.edit_community_role }
+		"del_community_role" { return Cmd_T.del_community_role }
+		"create_community_chat" { return Cmd_T.create_community_chat }
+		"edit_community_chat" { return Cmd_T.edit_community_chat }
+		"del_community_chat" { return Cmd_T.del_community_chat }
+		"invalid_cmd" { return Cmd_T.invalid_cmd }
+		"invalid_parameters" { return Cmd_T.invalid_parameters }
+		"invalid_perm" { return Cmd_T.invalid_perm }
+		"invalid_login_info" { return Cmd_T.invalid_login_info }
+		"account_perm_ban" { return Cmd_T.account_perm_ban }
+		"account_temp_ban" { return Cmd_T.account_temp_ban }
+		"force_confirm_email" { return Cmd_T.force_confirm_email }
+		"force_device_trust" { return Cmd_T.force_device_trust }
+		"force_add_phone_number_request" { return Cmd_T.force_add_phone_number_request }
+		"verify_pin_code" { return Cmd_T.verify_pin_code }
+		"verify_sms_code" { return Cmd_T.verify_sms_code }
+		"failed_to_send_friend_request" { return Cmd_T.failed_to_send_friend_request }
+		"blocked_by_user" { return Cmd_T.blocked_by_user }
+		"dm_sent" { return Cmd_T.dm_sent }
+		"dm_failed" { return Cmd_T.dm_failed }
+		"invalid_role_perm" { return Cmd_T.invalid_role_perm }
+		"account_ban" { return Cmd_T.account_ban }
+		"dm_msg_received" { return Cmd_T.dm_msg_received }
+		"community_msg_received" { return Cmd_T.community_msg_received }
+	}
 
+	return Cmd_T._null
 }
 
 pub fn (mut r Response) get_map_info() map[string]string
+{
+	return {
+		"status": r.status,
+		"resp_t": r.resp_t,
+		"cmd_t": r.cmd_t
+	}
+}
