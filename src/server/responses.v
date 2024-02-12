@@ -30,7 +30,7 @@ pub enum Cmd_T
 	add_new_email			= 0x10003             // CHANGE CURRENT EMAIL FOR VERIFICATION
         send_pin_verification_code	= 0x10004	      // SEND PIN VERIFICATION CODE
         send_sms_verification_code 	= 0x10005             // SEND SMS VERIFICATION CODE
-        send_email_verification_code	- 0x10006  	      // SEND EMAIL VERIFICATION CODE
+        send_email_verification_code	= 0x10006  	      // SEND EMAIL VERIFICATION CODE
 
 	/* Friend Request Commands */
         send_friend_request		= 0x10007             // SEND A FRIEND REQUEST
@@ -97,7 +97,15 @@ pub enum Cmd_T
 	community_msg_received		= 0x10044
 }
 
-pub fn build_json_response(status bool, respt Resp_T, cmdt Cmd_T) string
+pub struct Response
+{
+	pub mut:
+		status bool
+		resp_t RespT
+		cmd_t  Cmd_T
+}
+
+pub fn build_json_response(status bool, respt Resp_T, cmdt Cmd_T) Response
 {
 
 }
@@ -111,3 +119,5 @@ pub fn cmd2type(data string) Cmd_T
 {
 
 }
+
+pub fn (mut r Response) get_map_info() map[string]string
