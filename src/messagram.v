@@ -4,37 +4,37 @@ import os
 
 import src.utils
 import src.server
-import src.db_utils
+import src.db_utils as db
 
 pub struct Messagram
 {
 	pub mut:
-		users		[]db_utils.User
-		server		&server.MessagramServer
+		users		[]db.User
+		server		server.MessagramServer
 }
 
 pub fn build_messagram() Messagram
 {
-	mut m := Messagram{server: &server.MessagramServer{}}
+	mut m := Messagram{server: server.MessagramServer{}}
 
 	m.load_user_db()
 	m.load_all_communities()
 
-	go server.start_messagram_server(mut m.server, mut users)
+	go server.start_messagram_server(mut &m.server, mut &m.users)
 
 	return m
 }
 
 pub fn (mut m Messagram) load_user_db() 
 {
-	mut db := os.read_lines(db_utils.user_dbpath) or { 
+	mut user_db := os.read_lines(db.user_dbpath) or { 
 		println("[ X ] Error, Unable to read Messagram User Database")
 		return 
 	}
 
 	println("[ + ] Loading Messagram User Database.....")
 
-	for user_line in db 
+	for user_line in user_db
 	{
 		if user_line.len < 2 { continue }
 		// ('USER_ID','USERNAME','EMAIL','PASSWORD','IP_ADDR','NO_PHONE','ACCOUNT_PIN_CODE','MESSAGRAM_RANK_INT')
@@ -42,7 +42,7 @@ pub fn (mut m Messagram) load_user_db()
 		info := utils.rm_str(user_line, ['(', ')', '\'']).split(",")
 
 		if info.len == 8 
-		{ m.users << db_utils.user(user_line, true) }
+		{ m.users << db.user(user_line, true) }
 		else { println("[ X ] Error, DB Line is corrupted....!\r\n\t=> ${user_line}")}
 	}
 
@@ -68,7 +68,7 @@ pub fn (mut m Messagram) load_all_communities()
 	}
 }
 
-pub fn (mut m Messagram) find_profile(username string) db_utils.User
+pub fn (mut m Messagram) find_profile(username string) db.User
 {
 	for mut user in m.users 
 	{
@@ -77,15 +77,15 @@ pub fn (mut m Messagram) find_profile(username string) db_utils.User
 		}
 	}
 
-	return db_utils.User{}
+	return db.User{}
 }
 
-pub fn (mut m Messagram) authorize_user(username string, password string) db_utils.User
+pub fn (mut m Messagram) authorize_user(username string, password string) db.User
 {
 	for mut user in m.users
 	{
 		if user.username == username && user.password == password { return user }
 	}
 
-	return db_utils.User{}
+	return db.User{}
 }

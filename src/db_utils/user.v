@@ -208,12 +208,16 @@ fn is_username_valid(username string) bool
 
 	return weather a user is empty or not
 */
-fn (mut u User) is_empty() bool 
+pub fn (mut u User) is_empty() bool 
 {
-	return u.user_id == 0
+	if "${u.user_id}" != "" {
+		return true
+	}
+
+	return false
 }
 
-fn generate_uuid() string 
+pub fn generate_uuid() string 
 {
 	blocked_chars := ['~', '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '=', '[', ']', '+', '_', '|', '\\', '/', '`', '\'', '\"', '<', '>', '/']
 	mut key := ""

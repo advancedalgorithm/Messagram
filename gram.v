@@ -10,7 +10,7 @@ pub struct MessagramAPI
 {
 	vweb.Context
 	pub mut:
-		messagram Shared src.Messagram
+		messagram shared src.Messagram
 }
 fn main() 
 {
@@ -32,14 +32,19 @@ fn (mut api MessagramAPI) auth() vweb.Result
 	password := api.query['password'] or { "" }
 	hwid     := api.query['hwid']     or { "" }
 
+	mut user := db.User{}
+
 	lock api.messagram {
-		user := api.messagram.authorize_user(username, password);
-		if user.is_empty() {
-			return api.text("")
-		}
-
-		sessionUUID := db.generated_uuid()
-
-		api.text(sessionUUID)
+		user = api.messagram.authorize_user(username, password);
 	}
+	if user.is_empty() {
+		return api.text("")
+	}
+
+	session_uuid := db.generate_uuid()
+	if session_uuid != "" {
+		return api.text(session_uuid)
+	}
+
+	return api.text("[ X ] Error, Unable to account...!")
 }

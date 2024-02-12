@@ -14,13 +14,13 @@ pub struct MessagramServer
 
 		users			[]db.User
 		clients			[]Client
-		main_socket 	net.TcpListener
+		main_socket 		net.TcpListener
 }
 
-pub fn start_messagram_server(mut m MessagramServer, mut users db.User)
+pub fn start_messagram_server(mut m MessagramServer, mut users []db.User)
 {
 	m.main_socket = net.listen_tcp(.ip6, ":${m.port}") or {
-		println("[ X ], Error, Unable to start server....!")
+		println("[ X ] Error, Unable to start server....!")
 		return
 	}
 
@@ -102,7 +102,7 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	println("${username} ${password} ${ip} ${sid}")
 
 	// Login Authenication
-	mut user, auth_chk := m.authorize_user(username, password)
+	mut user, auth_chk := m.authorize_user("${username}", "${password}")
 
 	if !auth_chk {
 		c.write_string("{\"status\": \"false\", \"resp_t\": \"user_resp\", \"cmd_t\": \"INVALID_INFO\"}") or { 0 }
@@ -111,25 +111,71 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	}
 
 	c.write_string("{\"status\": \"true\", \"resp_t\": \"user_resp\", \"cmd_t\": \"SUCCESSFUL_LOGIN\"}") or { 0 }
-	command_handler(mut c)
+	m.command_handler(mut c, mut user)
 }
 
-pub fn (mut m MessagramServer) command_handler(login_data string)
+pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut user db.User)
 {
+	mut reader := io.new_buffered_reader(reader: socket)
+	for
+	{
+		new_data := reader.read_line() or { "" }
 
+		if !new_data.starts_with("{") || !new_data.ends_with("}")
+		{
+			println("[ X ] Error, Invalid JSON Data Received!")
+			continue;
+		}
+
+		json_data := (jsn.raw_decode(new_data) or { jsn.Any{} }).as_map()
+
+
+		/*
+			Default JSON Fields
+
+			There will be additional keys to parse depending on the
+			type of commands received
+			{
+				"cmd": "",
+				"username": "",
+				"sessionID": "",
+				"hwid": ""
+			}
+		*/
+		cmd := (json_data['cmd_t'] or { "" }).str()
+		username := (json_data['username'] or { "" }).str()
+		sid := (json_data['sessionID'] or { "" }).str()
+		hwid := (json_data['hwid'] or { "" }).str() 
+
+		match cmd
+		{
+			"client_authenication" {
+				// do shit lawl
+				break
+			}
+			"send_friend_request" {
+				// do shit 
+				break
+			}
+			"cancel_friend_info" {
+				// do shit
+				break
+			} else {}
+		}
+	}
 }
 
-pub fn (mut m MessagramServer) find_profile(username) db.User
+pub fn (mut m MessagramServer) find_profile(username string) db.User
 {
-
+	return db.User{}
 }
 
 pub fn (mut m MessagramServer) authorize_user(username string, password string) (db.User, bool)
 {
 	for mut user in m.users
 	{
-		if user.username == username && user.password == passwrd { return user, true }
+		if user.username == username && user.password == password { return user, true }
 	}
 
-	return db.User, false
+	return db.User{}, false
 }
