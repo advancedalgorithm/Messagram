@@ -13,6 +13,12 @@ pub struct Messagram
 		server		&server.MessagramServer
 }
 
+pub fn update_db(mut m Messagram, mut n Messagram) 
+{
+	m.users = n.users
+	m.server.users = n.users
+}
+
 pub fn build_messagram() Messagram
 {
 	mut m := Messagram{server: &server.MessagramServer{}}

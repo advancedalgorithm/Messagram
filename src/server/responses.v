@@ -1,5 +1,9 @@
 module server
 
+import x.json2 as jsn
+
+import src.db_utils as db
+
 pub enum Resp_T
 {
 	_null  			        = 0x20000
@@ -26,6 +30,7 @@ pub enum Cmd_T
 	// Operation Commands from CLIENTS
 
 	/* Authentication Commands */
+	client_authentication		= 0x10001	      // CLIENT AUTH
         add_sms_auth 			= 0x10002             // SEND NEW PHONE NUMBER FOR VERIFICATION
 	add_new_email			= 0x10003             // CHANGE CURRENT EMAIL FOR VERIFICATION
         send_pin_verification_code	= 0x10004	      // SEND PIN VERIFICATION CODE
@@ -69,9 +74,10 @@ pub enum Cmd_T
 	*/
 
 	/* GENERAL REQUEST OPERATIONS */
-	invalid_cmd			= 0x10026	      // INVALID COMMAND
-	invalid_parameters		= 0x10027	      // INVALID PARAMETERS PROVIDED (JSON KEY/VALUES)
-	invalid_perm			= 0x10028	      // INVALID PERMS
+	invalid_cmd			= 0x10025	      // INVALID COMMAND
+	invalid_parameters		= 0x10026	      // INVALID PARAMETERS PROVIDED (JSON KEY/VALUES)
+	invalid_perm			= 0x10027	      // INVALID PERMS
+	invalid_operation		= 0x10028
 
 	invalid_login_info		= 0x10029
 	account_perm_ban		= 0x10030
@@ -88,21 +94,32 @@ pub enum Cmd_T
 
 	/* FAILED DM OPERATIONS */
 	dm_sent				= 0x10039
-	dm_failed			= 0x10040
-
+	dm_failed			= 0x100401
 	/* FAILED COMMUNITY OPERATIONS */
-	invalid_role_perm		= 0x10041
-	account_ban			= 0x10042
-	dm_msg_received			= 0x10043
-	community_msg_received		= 0x10044
+	invalid_role_perm		= 0x10042
+	account_ban			= 0x10043
+	dm_msg_received			= 0x10044
+	community_msg_received		= 0x10045
 }
 
 pub struct Response
 {
 	pub mut:
-		status bool
-		resp_t RespT
-		cmd_t  Cmd_T
+		status 			bool
+		resp_t 			Resp_T
+		cmd_t  			Cmd_T
+
+		from_user		db.User
+		to_user			db.User
+		to_community	db.Community
+		jsn_info 		map[string]jsn.Any
+		valid_action	bool
+}
+
+pub fn parse_cmd(mut u db.User, data string) Response
+{
+	json := (jsn.raw_decode("${data}") or { jsn.Any{} }).as_map()
+	return Response{cmd_t: cmd2type((json['cmd_t'] or { "" }).str()), jsn_info: json, from_user: u}
 }
 
 pub fn build_json_response(status bool, respt Resp_T, cmdt Cmd_T) Response
@@ -118,27 +135,14 @@ pub fn resp2type(data string) Resp_T
 {
 	match data
 	{
-		"socket_connected" {
-			return Resp_T.socket_connected
-		}
-		"invalid_connection" {
-			return Resp_T.invalid_connection
-		}
-		"socket_rejected" {
-			return Resp_T.socket_rejected
-		}
-		"device_banned" {
-			return Resp_T.device_banned
-		}
-		"user_resp" {
-			return Resp_T.user_resp
-		}
-		"push_event" {
-			return Resp_T.push_event
-		}
-		"mass_event" {
-			return Resp_T.mass_event
-		}
+		"socket_connected" 					{ return Resp_T.socket_connected }
+		"invalid_connection" 				{ return Resp_T.invalid_connection }
+		"socket_rejected" 					{ return Resp_T.socket_rejected }
+		"device_banned" 					{ return Resp_T.device_banned }
+		"user_resp" 						{ return Resp_T.user_resp }
+		"push_event" 						{ return Resp_T.push_event }
+		"mass_event" 						{ return Resp_T.mass_event } 
+		else {}
 	}
 
 	return Resp_T._null
@@ -146,58 +150,129 @@ pub fn resp2type(data string) Resp_T
 
 pub fn cmd2type(data string) Cmd_T {
 	match data {
-		"add_sms_auth" { return Cmd_T.add_sms_auth }
-		"add_new_email" { return Cmd_T.add_new_email }
-		"send_pin_verification_code" { return Cmd_T.send_pin_verification_code }
-		"send_sms_verification_code" { return Cmd_T.send_sms_verification_code }
-		"send_email_verification_code" { return Cmd_T.send_email_verification_code }
-		"send_friend_request" { return Cmd_T.send_friend_request }
-		"cancel_friend_request" { return Cmd_T.cancel_friend_request }
-		"send_dm_msg" { return Cmd_T.send_dm_msg }
-		"send_dm_msg_rm" { return Cmd_T.send_dm_msg_rm }
-		"send_dm_reaction" { return Cmd_T.send_dm_reaction }
-		"send_dm_react_rm" { return Cmd_T.send_dm_react_rm }
-		"create_community" { return Cmd_T.create_community }
-		"edit_community" { return Cmd_T.edit_community }
-		"inv_toggle" { return Cmd_T.inv_toggle }
-		"kick_user" { return Cmd_T.kick_user }
-		"ban_user" { return Cmd_T.ban_user }
-		"del_msg" { return Cmd_T.del_msg }
-		"create_community_role" { return Cmd_T.create_community_role }
-		"edit_community_role" { return Cmd_T.edit_community_role }
-		"del_community_role" { return Cmd_T.del_community_role }
-		"create_community_chat" { return Cmd_T.create_community_chat }
-		"edit_community_chat" { return Cmd_T.edit_community_chat }
-		"del_community_chat" { return Cmd_T.del_community_chat }
-		"invalid_cmd" { return Cmd_T.invalid_cmd }
-		"invalid_parameters" { return Cmd_T.invalid_parameters }
-		"invalid_perm" { return Cmd_T.invalid_perm }
-		"invalid_login_info" { return Cmd_T.invalid_login_info }
-		"account_perm_ban" { return Cmd_T.account_perm_ban }
-		"account_temp_ban" { return Cmd_T.account_temp_ban }
-		"force_confirm_email" { return Cmd_T.force_confirm_email }
-		"force_device_trust" { return Cmd_T.force_device_trust }
-		"force_add_phone_number_request" { return Cmd_T.force_add_phone_number_request }
-		"verify_pin_code" { return Cmd_T.verify_pin_code }
-		"verify_sms_code" { return Cmd_T.verify_sms_code }
-		"failed_to_send_friend_request" { return Cmd_T.failed_to_send_friend_request }
-		"blocked_by_user" { return Cmd_T.blocked_by_user }
-		"dm_sent" { return Cmd_T.dm_sent }
-		"dm_failed" { return Cmd_T.dm_failed }
-		"invalid_role_perm" { return Cmd_T.invalid_role_perm }
-		"account_ban" { return Cmd_T.account_ban }
-		"dm_msg_received" { return Cmd_T.dm_msg_received }
-		"community_msg_received" { return Cmd_T.community_msg_received }
+		"client_authentication"				{ return Cmd_T.client_authentication }
+		"add_sms_auth"						{ return Cmd_T.add_sms_auth }
+		"add_new_email"						{ return Cmd_T.add_new_email }
+		"send_pin_verification_code" 		{ return Cmd_T.send_pin_verification_code }
+		"send_sms_verification_code" 		{ return Cmd_T.send_sms_verification_code }
+		"send_email_verification_code" 		{ return Cmd_T.send_email_verification_code }
+		"send_friend_request"				{ return Cmd_T.send_friend_request }
+		"cancel_friend_request"				{ return Cmd_T.cancel_friend_request }
+		"send_dm_msg" 						{ return Cmd_T.send_dm_msg }
+		"send_dm_msg_rm" 					{ return Cmd_T.send_dm_msg_rm }
+		"send_dm_reaction" 					{ return Cmd_T.send_dm_reaction }
+		"send_dm_react_rm"	 				{ return Cmd_T.send_dm_react_rm }
+		"create_community" 					{ return Cmd_T.create_community }
+		"edit_community" 					{ return Cmd_T.edit_community }
+		"inv_toggle" 						{ return Cmd_T.inv_toggle }
+		"kick_user" 						{ return Cmd_T.kick_user }
+		"ban_user" 							{ return Cmd_T.ban_user }
+		"del_msg" 							{ return Cmd_T.del_msg }
+		"create_community_role" 			{ return Cmd_T.create_community_role }
+		"edit_community_role" 				{ return Cmd_T.edit_community_role }
+		"del_community_role" 				{ return Cmd_T.del_community_role }
+		"create_community_chat" 			{ return Cmd_T.create_community_chat }
+		"edit_community_chat" 				{ return Cmd_T.edit_community_chat }
+		"del_community_chat" 				{ return Cmd_T.del_community_chat }
+		"invalid_cmd" 						{ return Cmd_T.invalid_cmd }
+		"invalid_parameters" 				{ return Cmd_T.invalid_parameters }
+		"invalid_perm" 						{ return Cmd_T.invalid_perm }
+		"invalid_login_info" 				{ return Cmd_T.invalid_login_info }
+		"account_perm_ban" 					{ return Cmd_T.account_perm_ban }
+		"account_temp_ban" 					{ return Cmd_T.account_temp_ban }
+		"force_confirm_email" 				{ return Cmd_T.force_confirm_email }
+		"force_device_trust" 				{ return Cmd_T.force_device_trust }
+		"force_add_phone_number_request"	{ return Cmd_T.force_add_phone_number_request }
+		"verify_pin_code" 					{ return Cmd_T.verify_pin_code }
+		"verify_sms_code" 					{ return Cmd_T.verify_sms_code }
+		"failed_to_send_friend_request" 	{ return Cmd_T.failed_to_send_friend_request }
+		"blocked_by_user" 					{ return Cmd_T.blocked_by_user }
+		"dm_sent" 							{ return Cmd_T.dm_sent }
+		"dm_failed" 						{ return Cmd_T.dm_failed }
+		"invalid_role_perm" 				{ return Cmd_T.invalid_role_perm }
+		"invalid_operation" 				{ return Cmd_T.invalid_operation }
+		"account_ban" 						{ return Cmd_T.account_ban }
+		"dm_msg_received"					{ return Cmd_T.dm_msg_received }
+		"community_msg_received" 			{ return Cmd_T.community_msg_received }
+		else {}
 	}
 
 	return Cmd_T._null
 }
 
+pub fn (mut r Response) parse_cmd_data() Response
+{
+	match r.cmd_t
+	{
+		.client_authentication {
+
+		}
+		.add_sms_auth {
+			
+		}
+		.add_new_email {
+			
+		}
+		.send_pin_verification_code {
+			
+		}
+		.send_sms_verification_code {
+			
+		}
+		.send_email_verification_code {
+			
+		}
+		.send_friend_request {
+			return r.parse_friend_req()
+		} else {} 
+	}
+
+	return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_role_perm}
+}
+
 pub fn (mut r Response) get_map_info() map[string]string
 {
 	return {
-		"status": r.status,
-		"resp_t": r.resp_t,
-		"cmd_t": r.cmd_t
+		"status": "${r.status.str()}",
+		"resp_t": "${r.resp_t}",
+		"cmd_t": "${r.cmd_t}"
 	}
+}
+
+pub fn (mut r Response) to_str() string { return "${r.get_map_info()}" }
+
+pub fn (mut r Response) parse_friend_req() Response
+{
+	/*
+		This should build a new message to return, Calling this
+		function before returning it will validate if the action
+		is able to be done or not
+
+		Accepting the following json below
+		{
+			"cmd": "user_friend_req", 
+			"username": "",
+			"sessionID": "", // VALIDATE @ COMMAND HANDLER"S INPUT
+			"hwid": "",  	 // VALIDATE @ COMMAND HANDLER"S INPUT
+			"to_username": "",
+			"client_name": "",
+			"client_version": ""
+		}
+	*/
+
+
+	mut new_r := Response{cmd_t: cmd2type((r.jsn_info['cmd_t'] or { "" }).str())}
+	if new_r.cmd_t == ._null {
+		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_cmd}
+	}
+
+	
+	if "to_username" !in r.jsn_info {
+		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_parameters}
+	}
+
+	new_r.jsn_info = r.jsn_info.clone()
+	new_r.valid_action = true
+
+	return new_r
 }

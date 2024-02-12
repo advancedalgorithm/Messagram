@@ -2,6 +2,7 @@ module server
 
 import io
 import net
+import time
 import x.json2 as jsn
 
 import src.db_utils as db
@@ -11,7 +12,6 @@ pub struct MessagramServer
 	pub mut:
 		host			string
 		port 			int = 666
-
 		users			[]db.User
 		clients			[]Client
 		main_socket 		net.TcpListener
@@ -41,14 +41,21 @@ pub fn (mut m MessagramServer) client_listener()
 			IT WILL BE SENT TO PARSE AND AUTHORIZATION CHECKING 
 		*/
 		user_ip := client.peer_ip() or { "" }
-		if user_ip == "BACKEND_IP_HERE" {
-			m.authenicate_user(mut client)
+		client.set_read_timeout(time.infinite)
+		if user_ip == "BACKEND_IP_HERE" { // WEBSITE
+			m.authenticate_user(mut client)
 		}
 		m.client_authenticator(mut client)
 	}
 }
 
-pub fn (mut m MessagramServer) authenicate_user(mut c net.TcpConn)
+/*
+* USE FOR API ENDPOINT
+*
+* Authorize user then generate a sessionID for user on the API Endpoint
+*
+*/
+pub fn (mut m MessagramServer) authenticate_user(mut c net.TcpConn)
 {
 	mut reader := io.new_buffered_reader(reader: c)
 	mut info := reader.read_line() or { "" }
@@ -58,6 +65,11 @@ pub fn (mut m MessagramServer) authenicate_user(mut c net.TcpConn)
 	}
 
 
+	// Find user
+	// mut user, chk := authorize_user(username, password)
+
+	// mut socket_client := new_client(mut c, 
+	// m.clients << socket_client
 }
 
 /*
@@ -67,7 +79,7 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 {
 	mut reader := io.new_buffered_reader(reader: c)
 
-	c.write_string("[ + ] Welcome to Messagram Server v0.0.1\n") or { 0 }
+	// c.write_string("[ + ] Welcome to Messagram Server v0.0.1\n") or { 0 }
 	login := reader.read_line() or { "" }
 
 	println(login)
@@ -77,43 +89,58 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 		return 
 	}
 
-	/*	
+	/*
 		{
-
+			"cmd_t": ""
 			"username": "",
-			"password": "",
-			"ip": "",
-			"sid": ""
+			"sid": "",
+			"hwid": "",
+			"client_name": "",
+			"client_version": ""
 		}
 	*/
 	mut login_data := (jsn.raw_decode("${login}") or { jsn.Any{} }).as_map()
 
-	if "cmd" !in login_data || "username" !in login_data || "sessionID" !in login_data || "hwid" !in login_data {
+	if "cmd" !in login_data || "username" !in login_data || "sid" !in login_data || "hwid" !in login_data {
 		println("[ X ] Error, Invalid JSON Response")
 		c.close() or { net.TcpConn{} }
 		return
 	}
 
-	username 	:= login_data['username'] or { "" }
-	password 	:= login_data['password'] or { "" }
-	ip 		:= login_data['ip'] or { "" }
-	sid 		:= login_data['sid'] or { "" }
+	cmd 		:= (login_data['cmd_t'] 			or { "" }).str()
+	username 	:= (login_data['username'] 			or { "" }).str()
+	sid 		:= (login_data['sid'] 				or { "" }).str()
+	hwid		:= (login_data['hwid'] 				or { "" }).str()
+	client_name := (login_data['client_name']		or { "" }).str()
+	client_v 	:= (login_data['client_version'] 	or { "" }).str()
+	host_addr	:= c.peer_ip() or { "" }
 
-	println("${username} ${password} ${ip} ${sid}")
+	println("${cmd} ${username} ${sid} ${hwid}")
 
 	// Login Authenication
-	mut user, auth_chk := m.authorize_user("${username}", "${password}")
+	mut user := m.find_account(username)
+	mut client, chk := m.find_client_id(sid, hwid)
 
-	if !auth_chk {
-		c.write_string("{\"status\": \"false\", \"resp_t\": \"user_resp\", \"cmd_t\": \"INVALID_INFO\"}") or { 0 }
-		c.close() or { net.TcpConn{} }
+	if !chk {
+		c.close() or { return }
 		return
 	}
+
+	/* Updating the Client's Socket && Client Information */
+	client.socket 		= c
+	client.using_app 	= true
+	client.app_name 	= client_name
+	client.app_version 	= client_v
 
 	c.write_string("{\"status\": \"true\", \"resp_t\": \"user_resp\", \"cmd_t\": \"SUCCESSFUL_LOGIN\"}") or { 0 }
 	m.command_handler(mut c, mut user)
 }
 
+/*
+	Client Cmd Handler
+
+	Handling account actions such as setting editing, dm actions etc
+*/
 pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut user db.User)
 {
 	mut reader := io.new_buffered_reader(reader: socket)
@@ -127,9 +154,6 @@ pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut user 
 			continue;
 		}
 
-		json_data := (jsn.raw_decode(new_data) or { jsn.Any{} }).as_map()
-
-
 		/*
 			Default JSON Fields
 
@@ -139,43 +163,66 @@ pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut user 
 				"cmd": "",
 				"username": "",
 				"sessionID": "",
-				"hwid": ""
+				"hwid": "",
+				"client_name": "",
+				"client_version": ""
 			}
-		*/
-		cmd := (json_data['cmd_t'] or { "" }).str()
-		username := (json_data['username'] or { "" }).str()
-		sid := (json_data['sessionID'] or { "" }).str()
-		hwid := (json_data['hwid'] or { "" }).str() 
 
-		match cmd
-		{
-			"client_authenication" {
-				// do shit lawl
-				break
-			}
-			"send_friend_request" {
-				// do shit 
-				break
-			}
-			"cancel_friend_info" {
-				// do shit
-				break
-			} else {}
-		}
+			Validate the information below to check the connection
+		*/
+		json_data 	:= (jsn.raw_decode(new_data) 	or { jsn.Any{} }).as_map()
+		cmd 		:= (json_data['cmd_t'] 			or { "" }).str()
+		username 	:= (json_data['username'] 		or { "" }).str()
+		sid 		:= (json_data['sessionID'] 		or { "" }).str()
+		hwid 		:= (json_data['hwid'] 			or { "" }).str() 
+		client_name	:= (json_data['client_name']	or { "" }).str()
+		client_v	:= (json_data['client_v']		or { "" }).str() 
+
+		// DO ALL CONNECTION VALIDATION CHECKS HERE
+
+		mut r := parse_cmd(mut user, new_data)
+		mut new_r := r.parse_cmd_data()
+
+		handle_command(mut socket, mut new_r)
+		socket.write_string("${new_r.to_str()}") or { 0 }
 	}
 }
 
-pub fn (mut m MessagramServer) find_profile(username string) db.User
+/*
+	Find the client id in the (CONNECTED SOCKET CLIENTS) using sid
+
+	Args:
+		- sid: sessionID
+	
+	Returns:
+		- Client structure
+*/
+pub fn (mut m MessagramServer) find_client_id(sid string, h string) (Client, bool)
 {
-	return db.User{}
+	mut new := Client{socket: &net.TcpConn{}}
+	for mut client in m.clients 
+	{
+		if client.sid == sid && client.hwid == h { return client, true }
+	}
+
+	return new, false
 }
 
-pub fn (mut m MessagramServer) authorize_user(username string, password string) (db.User, bool)
+/* 
+	Find an account within Messagram's Database (NOT CONNECTED SOCKET CLIENTS)
+	
+	Args:
+		- username: string
+	
+	Returns:
+		- User structure
+*/
+pub fn (mut m MessagramServer) find_account(username string) db.User
 {
 	for mut user in m.users
 	{
-		if user.username == username && user.password == password { return user, true }
+		if user.username == username { return user }
 	}
 
-	return db.User{}, false
+	return db.User{}
 }

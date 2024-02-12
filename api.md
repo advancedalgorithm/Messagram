@@ -45,12 +45,12 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 
 ```
 {
-     "cmd": "client_authenication",
-     "username": "",
-     "sessionID": "",
-     "hwid": "",
-     "client_name": "",
-     "client_version": ""
+	"cmd_t": "client_authentication"
+	"username": "",
+	"sid": "",
+	"hwid": "",
+	"client_name": "",
+	"client_version": ""
 }
 ```
 
@@ -60,7 +60,7 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 {
     "status": "true", // return true on auth success, false on auth failure
     "resp_t": "user_resp", // user response, signal to allow cmd data for client output
-    "data": "Successfully logged in" // data to output (OPTIONAL)
+    "cmd_t": "invalid_login_info" // data to output (OPTIONAL)
 }
 ```
 
@@ -88,7 +88,7 @@ https://api.messagram.io/auth?username=USERNAME&password=PASSWORD&HWID=
 {
     "status": "true", // return true on request success and false on request failure
     "resp_t": "user_resp", // user response, signal to allow cmd data for client output
-    "data": "Request Sent" // output to user (optional)
+    "cmd": "friend_request_sent" // output to user (optional)
 }
 ```
 

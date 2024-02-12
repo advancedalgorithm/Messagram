@@ -161,6 +161,12 @@ pub fn (mut u User) save_user_db()
 
 }
 
+pub fn (mut u User) validate_login(uname string, pword string) bool
+{
+	if u.username == uname && u.password == pword { return true }
+	return false
+}
+
 /*
 	[@DOC]
 
@@ -191,22 +197,6 @@ pub fn (mut u User) add_trust_sys(trust_t TrustSystems_T, trust_data string)
 
 		} else {}
 	}
-}
-
-/*
-	[@DOC]
-
-	generate_key() string
-*/
-fn generate_key() string 
-{
-	mut key := ""
-	for i in 0..32 {
-		num := rand.int_in_range(0, 9) or { 0 }
-		key += "${num}"
-	}
-
-	return key
 }
 
 /*

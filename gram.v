@@ -1,8 +1,10 @@
 import os
+import net
 import time
 import vweb
 
 import src
+import src.server
 import src.cp
 import src.db_utils as db
 
@@ -33,19 +35,22 @@ fn (mut api MessagramAPI) auth() vweb.Result
 	password := api.query['password'] or { "" }
 	hwid     := api.query['hwid']     or { "" }
 
-	mut user := db.User{}
+	mut user 		:= db.User{}
+	mut trash		:= net.TcpConn{}
+	mut n_client 	:= server.Client{socket: &trash}
 
 	lock api.gram {
-		user = api.gram.authorize_user(username, password);
-	}
-	if user.is_empty() {
-		return api.text("")
+		user = api.gram.find_profile(username)
 	}
 
-	session_uuid := db.generate_uuid()
-	if session_uuid != "" {
-		return api.text(session_uuid)
+	if user.validate_login(username, password) {
+		lock api.gram {
+			n_client = server.new_client(mut user, password, hwid) 
+			api.gram.server.clients << n_client
+			println("${api.gram.server.clients}")
+		}
+		return api.text("${n_client.sid}")
 	}
 
-	return api.text("[ X ] Error, Unable to account...!")
+	return api.text("[ X ] Error, Unable to find account...!")
 }
