@@ -119,6 +119,7 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	mut client, chk := m.find_client_id(sid, hwid)
 
 	if !chk {
+		c.write_string("{\"status\": \"false\", \"resp_t\": \"user_resp\", \"cmd_t\": \"INVALID_LOGIN_INFO\"}") or { 0 }
 		c.close() or { return }
 		return
 	}
