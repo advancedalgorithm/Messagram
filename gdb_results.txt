@@ -1,0 +1,86 @@
+root@vm776650:~/test# gdb --args ./gram
+GNU gdb (Ubuntu 9.2-0ubuntu1~20.04.1) 9.2
+Copyright (C) 2020 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "x86_64-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from ./gram...
+(gdb) run
+Starting program: /root/test/gram
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+[ + ] Loading Messagram User Database.....
+[ + ] Messagram Users loaded....!
+[New Thread 0x7ffff7cd9700 (LWP 156002)]
+[ X ] Error, Unable to start server....!
+[New Thread 0x7ffff74d8700 (LWP 156003)]
+[Thread 0x7ffff7cd9700 (LWP 156002) exited]
+Welcome to Messagram v1.0.0 | Written in V
+
+[messagram@cp] # [Vweb] Running app on http://localhost:80/
+[New Thread 0x7ffff7cd9700 (LWP 156004)]
+[Vweb] We have 1 workers
+
+Thread 1 "gram" received signal SIG40, Real-time event 40.
+__GI___libc_read (nbytes=1024, buf=0x691260, fd=0) at ../sysdeps/unix/sysv/linux/read.c:26
+26      ../sysdeps/unix/sysv/linux/read.c: No such file or directory.
+(gdb) bt full
+#0  __GI___libc_read (nbytes=1024, buf=0x691260, fd=0) at ../sysdeps/unix/sysv/linux/read.c:26
+        resultvar = 18446744073709551104
+        sc_cancel_oldtype = 0
+        __arg3 = <optimized out>
+        _a2 = <optimized out>
+        sc_ret = <optimized out>
+        __value = <optimized out>
+        __arg1 = <optimized out>
+        _a3 = <optimized out>
+        resultvar = <optimized out>
+        resultvar = <optimized out>
+        __arg2 = <optimized out>
+        _a1 = <optimized out>
+#1  __GI___libc_read (fd=0, buf=0x691260, nbytes=1024) at ../sysdeps/unix/sysv/linux/read.c:24
+No locals.
+#2  0x00007ffff7e37b9f in _IO_new_file_underflow (fp=0x7ffff7f93980 <_IO_2_1_stdin_>) at libioP.h:948
+        count = <optimized out>
+#3  0x00007ffff7e2a718 in _IO_getdelim (lineptr=0x7fffffffcfa8, n=0x7fffffffcfa0, delimiter=10, fp=0x7ffff7f93980 <_IO_2_1_stdin_>) at iogetdelim.c:73
+        _IO_acquire_lock_file = 0x7ffff7f93980 <_IO_2_1_stdin_>
+        result = <optimized out>
+        cur_len = 0
+        len = 0
+#4  0x00000000005425ad in os__get_raw_line () at /tmp/v_0/gram.tmp.c:27557
+        buf = 0x690480 ""
+        nr_chars = 32767
+        str = {str = 0x0, len = -134658400, is_lit = 32767}
+        ret = {str = 0x7ffff7f904a0 <_IO_file_jumps> "", len = -136145978, is_lit = 32767}
+        max = 120
+#5  0x000000000054663e in os__input_opt (prompt=...) at /tmp/v_0/gram.tmp.c:28336
+        res = {str = 0x691120 "", len = -134658400, is_lit = 32767}
+#6  0x00000000005467f4 in os__input (prompt=...) at /tmp/v_0/gram.tmp.c:28346
+        _t1 = {state = 144 '\220', err = {{_object = 0x100000000, _None__ = 0x100000000, _voidptr = 0x100000000, _Error = 0x100000000, _MessageError = 0x100000000,
+              _time__TimeParseError = 0x100000000, _io__Eof = 0x100000000, _io__NotExpected = 0x100000000, _os__Eof = 0x100000000, _os__NotExpected = 0x100000000,
+              _os__FileNotOpenedError = 0x100000000, _os__SizeOfTypeIs0Error = 0x100000000, _os__ExecutableNotFoundError = 0x100000000, _x__json2__DecodeError = 0x100000000,
+              _x__json2__InvalidTokenError = 0x100000000, _x__json2__UnknownTokenError = 0x100000000, _crypto__rand__ReadError = 0x100000000, _net__http__HeaderKeyError = 0x100000000,
+              _net__http__MultiplePathAttributesError = 0x100000000, _net__http__UnexpectedExtraAttributeError = 0x100000000}, _typ = -12016, msg = 0x35cb5f03ac20f200,
+            code = 0x7fffffffd140}, data = "\002\265O\000\000\000\000\000\060H`\000\000\000\000"}
+        res = {str = 0x7fffffffd110 "@\321\377\377\377\177", len = 5223789, is_lit = 0}
+#7  0x000000000055e452 in src__cp__prompt () at /tmp/v_0/gram.tmp.c:32955
+        data = {str = 0x7fffffffd190 "", len = 6145812, is_lit = 0}
+#8  0x00000000005b27ab in main__main () at /tmp/v_0/gram.tmp.c:43683
+        messagram = 0x7ffff7cfae00
+        arg__t1 = 0x7ffff7d5cd60
+        thread__t1 = 140737342441216
+        thread__t1_attributes = {__size = '\000' <repeats 17 times>, "\020", '\000' <repeats 16 times>, "\200", '\000' <repeats 20 times>, __align = 0}
+        _t1_thr_res = 0
+#9  0x00000000005c952e in main (___argc=1, ___argv=0x7fffffffe578) at /tmp/v_0/gram.tmp.c:48447
+No locals.
+(gdb)
