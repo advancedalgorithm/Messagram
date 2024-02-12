@@ -47,7 +47,6 @@ fn (mut api MessagramAPI) auth() vweb.Result
 		lock api.gram {
 			n_client = server.new_client(mut user, password, hwid) 
 			api.gram.server.clients << n_client
-			println("${api.gram.server.clients}")
 		}
 		return api.text("${n_client.sid}")
 	}

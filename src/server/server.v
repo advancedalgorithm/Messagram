@@ -82,7 +82,6 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	// c.write_string("[ + ] Welcome to Messagram Server v0.0.1\n") or { 0 }
 	login := reader.read_line() or { "" }
 
-	println(login)
 	if !login.starts_with("{") && !login.ends_with("}") {
 		println("[ X ] Error, Invalid login data provided....!\r\n\t=> Disconnecting user " + c.peer_ip() or { "" } + "\r\n\t=>\r\n${login}")
 		c.close() or { net.TcpConn{} }
@@ -115,10 +114,8 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	client_v 	:= (login_data['client_version'] 	or { "" }).str()
 	host_addr	:= c.peer_ip() or { "" }
 
-	println("${cmd} ${username} ${sid} ${hwid}")
-
 	// Login Authenication
-	mut user := m.find_account(username)
+	mut user 		:= m.find_account(username)
 	mut client, chk := m.find_client_id(sid, hwid)
 
 	if !chk {
@@ -131,9 +128,11 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	client.using_app 	= true
 	client.app_name 	= client_name
 	client.app_version 	= client_v
+	
+	println("${client}")
 
 	c.write_string("{\"status\": \"true\", \"resp_t\": \"user_resp\", \"cmd_t\": \"SUCCESSFUL_LOGIN\"}") or { 0 }
-	m.command_handler(mut c, mut user)
+	m.command_handler(mut c, mut client)
 }
 
 /*
@@ -141,17 +140,20 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 
 	Handling account actions such as setting editing, dm actions etc
 */
-pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut user db.User)
+pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut client Client)
 {
 	mut reader := io.new_buffered_reader(reader: socket)
 	for
 	{
-		new_data := reader.read_line() or { "" }
+		new_data := reader.read_line() or {
+			println("[ X ] Error, Client disconnected from socket\r\n\t=>${client.info.username}.....!")
+			return
+		}
 
 		if !new_data.starts_with("{") || !new_data.ends_with("}")
 		{
 			println("[ X ] Error, Invalid JSON Data Received!")
-			continue;
+			return
 		}
 
 		/*
@@ -180,10 +182,11 @@ pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut user 
 
 		// DO ALL CONNECTION VALIDATION CHECKS HERE
 
-		mut r := parse_cmd(mut user, new_data)
+		mut r := parse_cmd(mut client.info, new_data)
 		mut new_r := r.parse_cmd_data()
 
 		handle_command(mut socket, mut new_r)
+		println(new_r.to_str())
 		socket.write_string("${new_r.to_str()}") or { 0 }
 	}
 }
@@ -219,6 +222,7 @@ pub fn (mut m MessagramServer) find_client_id(sid string, h string) (Client, boo
 */
 pub fn (mut m MessagramServer) find_account(username string) db.User
 {
+	println("Searching... ${username}")
 	for mut user in m.users
 	{
 		if user.username == username { return user }
