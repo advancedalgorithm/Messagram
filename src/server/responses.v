@@ -14,7 +14,7 @@ pub enum Resp_T
 	mass_event			= 0x20007	      // SEND A MASS USER EVENT SUCH AS ANNOUNCEMENTS ETC
 }
 
-pub enum Responses 
+pub enum Cmd_T
 {
 	_null				= 0x10000
 	/*
@@ -72,9 +72,42 @@ pub enum Responses
 	invalid_cmd			= 0x10026	      // INVALID COMMAND
 	invalid_parameters		= 0x10027	      // INVALID PARAMETERS PROVIDED (JSON KEY/VALUES)
 	invalid_perm			= 0x10028	      // INVALID PERMS
+
+	invalid_login_info		= 0x10029
+	account_perm_ban		= 0x10030
+	account_temp_ban		= 0x10031
+	force_confirm_email		= 0x10032
+	force_device_trust		= 0x10033
+	force_add_phone_number_request	= 0x10034
+	verify_pin_code			= 0x10035
+	verify_sms_code			= 0x10036
+
+	/* FAILED FRIEND REQUEST OPERATIONS */
+	failed_to_send_friend_request	= 0x10037
+	blocked_by_user			= 0x10038
+
+	/* FAILED DM OPERATIONS */
+	dm_sent				= 0x10039
+	dm_failed			= 0x10040
+
+	/* FAILED COMMUNITY OPERATIONS */
+	invalid_role_perm		= 0x10041
+	account_ban			= 0x10042
+	dm_msg_received			= 0x10043
+	community_msg_received		= 0x10044
 }
 
 pub fn build_json_response(status bool, respt Resp_T, cmdt Cmd_T) string
+{
+
+}
+
+pub fn resp2type(data string) Resp_T
+{
+
+}
+
+pub fn cmd2type(data string) Cmd_T
 {
 
 }
