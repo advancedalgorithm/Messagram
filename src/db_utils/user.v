@@ -20,15 +20,15 @@ pub struct User
 		ip_addr				string
 		sms_number			string
 		pin_code			string
-		messa_rank			int
+		messa_rank			i64
 
 		hash                string
 
 		/*	
 			2FA Using Email and//or Phone Number
 		*/
-		twofa_toggle		bool
-		twofa 				string
+		twofa_toggle			bool
+		twofa 				TrustSystems_T
 
 		// 2D Array [ PC_NAME: [] ]
 		trusted_systems		map[string][]string
@@ -53,9 +53,10 @@ pub enum Settings_T
 pub enum TrustSystems_T
 {
 	null 		  	= 0x0000010
-	email 		  	= 0x0000011
-	phone 		  	= 0x0000012
-	authenticator 	= 0x0000013
+	pin_code		= 0x0000011
+	email 		  	= 0x0000012
+	phone 		  	= 0x0000013
+	authenticator 		= 0x0000014
 }
 
 /*
@@ -71,7 +72,7 @@ pub fn user(content string, new bool) User
 	id := content.int()
 
 	if new {
-		create(mut u, utils.rm_str(content, ['(', ')', '\'']).split(","))
+		return create(mut u, utils.rm_str(content, ['(', ')', '\'']).split(","))
 	}
 
 	return User{}
@@ -86,7 +87,38 @@ pub fn user(content string, new bool) User
 */
 pub fn create(mut u User, arr []string) User 
 {
-	return User{}
+	// ('USER_ID','USERNAME','EMAIL','PASSWORD','IP_ADDR','NO_PHONE','ACCOUNT_PIN_CODE','MESSAGRAM_RANK_INT')
+	if arr.len != 8 {
+		println("[ X ] Error, Corrupted DB Line....!")
+		return User{}
+	}
+
+	mut new_u := User{user_id: arr[0],
+		    username: arr[1],
+		    email: arr[2],
+		    password: arr[3],
+		    ip_addr: arr[4],
+		    sms_number: arr[5],
+		    pin_code: arr[6]}
+
+	if arr[7].i64() > 0 {
+		new_u.messa_rank = arr[7].i64()
+	}
+
+	//  PIN is not needed but that will be less account protection for users
+	if arr[6] != "NO_PIN_CODE" {
+		new_u.twofa_toggle = true
+		new_u.twofa = TrustSystems_T.pin_code
+	}
+
+	// Use SMS Verification Instead
+	if arr[5] != "NO_PHONE" {
+		new_u.twofa_toggle = true
+		new_u.twofa = TrustSystems_T.phone
+		return new_u
+	}
+
+	return new_u
 }
 
 /*

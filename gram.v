@@ -10,11 +10,12 @@ pub struct MessagramAPI
 {
 	vweb.Context
 	pub mut:
-		messagram shared src.Messagram
+		gram shared src.Messagram
 }
 fn main() 
 {
 	shared messagram := src.build_messagram()
+	spawn vweb.run(&MessagramAPI{gram: messagram}, 80)
 	time.sleep(2*time.millisecond)
 	cp.prompt()
 }
@@ -34,8 +35,8 @@ fn (mut api MessagramAPI) auth() vweb.Result
 
 	mut user := db.User{}
 
-	lock api.messagram {
-		user = api.messagram.authorize_user(username, password);
+	lock api.gram {
+		user = api.gram.authorize_user(username, password);
 	}
 	if user.is_empty() {
 		return api.text("")
