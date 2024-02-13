@@ -14,7 +14,7 @@ pub struct MessagramServer
 		port 			int = 666
 		users			[]db.User
 		clients			[]Client
-		main_socket 		net.TcpListener
+		main_socket 	net.TcpListener
 }
 
 pub fn start_messagram_server(mut m MessagramServer, mut users []db.User)
@@ -84,7 +84,7 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 
 	if !login.starts_with("{") && !login.ends_with("}") {
 		println("[ X ] Error, Invalid login data provided....!\r\n\t=> Disconnecting user " + c.peer_ip() or { "" } + "\r\n\t=>\r\n${login}")
-		c.close() or { net.TcpConn{} }
+		c.close() or { return }
 		return 
 	}
 
@@ -100,9 +100,9 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	*/
 	mut login_data := (jsn.raw_decode("${login}") or { jsn.Any{} }).as_map()
 
-	if "cmd" !in login_data || "username" !in login_data || "sid" !in login_data || "hwid" !in login_data {
+	if "cmd_t" !in login_data || "username" !in login_data || "sid" !in login_data || "hwid" !in login_data {
 		println("[ X ] Error, Invalid JSON Response")
-		c.close() or { net.TcpConn{} }
+		c.close() or { return }
 		return
 	}
 
@@ -118,6 +118,13 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	mut user 		:= m.find_account(username)
 	mut client, chk := m.find_client_id(sid, hwid)
 
+	println(login_data)
+	mut r := parse_cmd(mut client.info, login)
+	mut new_resp := r.parse_cmd_data()
+
+	println("Inbound Command: ${r.to_str()}")
+	println("Outbound Command: ${new_resp.to_str()}")
+
 	if !chk {
 		c.write_string("{\"status\": \"false\", \"resp_t\": \"user_resp\", \"cmd_t\": \"INVALID_LOGIN_INFO\"}") or { 0 }
 		c.close() or { return }
@@ -129,8 +136,6 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	client.using_app 	= true
 	client.app_name 	= client_name
 	client.app_version 	= client_v
-	
-	println("${client}")
 
 	c.write_string("{\"status\": \"true\", \"resp_t\": \"user_resp\", \"cmd_t\": \"SUCCESSFUL_LOGIN\"}") or { 0 }
 	m.command_handler(mut c, mut client)
@@ -147,12 +152,14 @@ pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut clien
 	for
 	{
 		new_data := reader.read_line() or {
+			m.disconnect_user(mut client.socket)
 			println("[ X ] Error, Client disconnected from socket\r\n\t=>${client.info.username}.....!")
 			return
 		}
 
 		if !new_data.starts_with("{") || !new_data.ends_with("}")
 		{
+			m.disconnect_user(mut client.socket)
 			println("[ X ] Error, Invalid JSON Data Received!")
 			return
 		}
@@ -186,10 +193,27 @@ pub fn (mut m MessagramServer) command_handler(mut socket net.TcpConn, mut clien
 		mut r := parse_cmd(mut client.info, new_data)
 		mut new_r := r.parse_cmd_data()
 
-		handle_command(mut socket, mut new_r)
-		println(new_r.to_str())
-		socket.write_string("${new_r.to_str()}") or { 0 }
+
+		println("Inbound Command: ${r.to_str()}")
+		println("Outbound Command: ${new_r.to_str()}")
+
+		/* UNCOMMENT THE FUNCTION BELOW ONCE ALL RESPONSES ARE FINISHED */
+		
+		// handle_command(mut socket, mut new_r)
+		// socket.write_string("${new_r.to_str()}") or { 0 }
 	}
+}
+
+pub fn (mut m MessagramServer) disconnect_user(mut socket net.TcpConn) bool
+{
+	socket.close() or { return false }
+
+	for i, client in m.clients 
+	{
+		if client.socket == socket { m.clients.delete(i) }
+	}
+
+	return true
 }
 
 /*

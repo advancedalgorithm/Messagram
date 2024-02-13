@@ -52,8 +52,6 @@ pub fn (mut m Messagram) load_user_db()
 		else { println("[ X ] Error, DB Line is corrupted....!\r\n\t=> ${user_line}")}
 	}
 
-	println("${m.users}")
-
 	if m.users.len == 0 {
 		println("[ - ] Warning, There is no users....!")
 	}
