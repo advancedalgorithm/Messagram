@@ -31,21 +31,21 @@ pub enum Cmd_T
 
 	/* Authentication Commands */
 	client_authentication				= 0x10001 // CLIENT AUTH
-        add_sms_auth 					= 0x10002 // SEND NEW PHONE NUMBER FOR VERIFICATION
+    add_sms_auth 						= 0x10002 // SEND NEW PHONE NUMBER FOR VERIFICATION
 	add_new_email						= 0x10003 // CHANGE CURRENT EMAIL FOR VERIFICATION
-        send_pin_verification_code		= 0x10004 // SEND PIN VERIFICATION CODE
-        send_sms_verification_code 		= 0x10005 // SEND SMS VERIFICATION CODE
-        send_email_verification_code	= 0x10006 // SEND EMAIL VERIFICATION CODE
+    send_pin_verification_code			= 0x10004 // SEND PIN VERIFICATION CODE
+    send_sms_verification_code 			= 0x10005 // SEND SMS VERIFICATION CODE
+    send_email_verification_code		= 0x10006 // SEND EMAIL VERIFICATION CODE
 
 	/* Friend Request Commands */
-        send_friend_request				= 0x10007 // SEND A FRIEND REQUEST
-        cancel_friend_request			= 0x10008 // CANCEL A FRIEND REQUEST
+    send_friend_request					= 0x10007 // SEND A FRIEND REQUEST
+    cancel_friend_request				= 0x10008 // CANCEL A FRIEND REQUEST
 
 	/* DM Commands */
-        send_dm_msg						= 0x10009 // SEND DM MESSAGE
-        send_dm_msg_rm					= 0x10010 // SEND DM MESSAGE REMOVAL
-        send_dm_reaction				= 0x10011 // SEND DM REACTION
-        send_dm_react_rm				= 0x10012 // SEND DM REACTION REMOVAL
+    send_dm_msg							= 0x10009 // SEND DM MESSAGE
+    send_dm_msg_rm						= 0x10010 // SEND DM MESSAGE REMOVAL
+    send_dm_reaction					= 0x10011 // SEND DM REACTION
+    send_dm_react_rm					= 0x10012 // SEND DM REACTION REMOVAL
 
 	/* Community Commands */
 	create_community					= 0x10013 // CREATE A COMMUNITY (LIKE A DISCORD SERVER)
@@ -115,6 +115,8 @@ pub struct Response
 		to_community	db.Community
 		jsn_info 		map[string]jsn.Any
 		valid_action	bool
+
+		data			string
 }
 
 pub fn parse_cmd(mut u db.User, data string) Response
@@ -151,7 +153,7 @@ pub fn resp2type(data string) Resp_T
 
 pub fn cmd2type(data string) Cmd_T {
 	println(data)
-	match data {
+	match data.to_lower() {
 		"client_authentication"				{ return Cmd_T.client_authentication }
 		"add_sms_auth"						{ return Cmd_T.add_sms_auth }
 		"add_new_email"						{ return Cmd_T.add_new_email }
@@ -226,6 +228,9 @@ pub fn (mut r Response) parse_cmd_data() Response
 		}
 		.send_friend_request {
 			return r.parse_friend_req()
+		}
+		.send_dm_msg {
+			return r.parse_send_dm_msg()
 		} else {} 
 	}
 
@@ -251,13 +256,19 @@ pub fn (mut r Response) parse_client_auth() Response
 	}
 
 	if r.cmd_t == .client_authentication { 
-		return Response{status: true, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.successful_login}
+		return Response{status: true, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.successful_login, data: "{\"status\": \"true\", \"resp_t\": \"${Resp_T.user_resp}\", \"cmd_t\": \"${Cmd_T.successful_login}\"}"}
 	}
 
 	
 	return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_operation}
 }
 
+/*
+	[@DOC]
+	fn (mut r Response) parse_friend_req() Response
+
+	Parsing the SEND_FRIEND_REQUEST Command!
+*/
 pub fn (mut r Response) parse_friend_req() Response
 {
 	mut new_r := Response{cmd_t: cmd2type((r.jsn_info['cmd_t'] or { "" }).str())}
@@ -274,4 +285,24 @@ pub fn (mut r Response) parse_friend_req() Response
 	new_r.valid_action = true
 
 	return new_r
+}
+
+pub fn (mut r Response) parse_send_dm_msg() Response 
+{
+
+	mut new_r := Response{cmd_t: cmd2type((r.jsn_info['cmd_t'] or { "" }).str())}
+	if new_r.cmd_t == ._null {
+		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_cmd}
+	}
+
+	if "from_username" in r.jsn_info || "to_username" in r.jsn_info || "data" in r.jsn_info {
+		r.data = "{\"status\": \"true\", \"resp_t\": \"${r.resp_t}\", \"cmd_t\": \"${r.cmd_t}\", \"from_username\": \"${r.jsn_info['from_username']}\", \"to_username\": \"${r.jsn_info['to_username']}\", \"data\": \"${r.jsn_info['data']}\"}"
+		new_r.resp_t = Resp_T.push_event
+		new_r.jsn_info = r.jsn_info.clone()
+		new_r.valid_action = true
+
+		return new_r
+	}
+
+	return Response{status: false, resp_t: Resp_T.push_event, cmd_t: Cmd_T.invalid_parameters}
 }

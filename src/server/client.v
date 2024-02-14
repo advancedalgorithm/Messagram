@@ -27,12 +27,12 @@ pub struct Client
 		using_app		bool
 		app_name		string
 		app_version		string
-		socket			&net.TcpConn
+		socket			net.TcpConn
 }
 
 pub fn new_client(mut u db.User, pword string, h string, args ...string) Client
 {
-	mut c := Client{socket: &net.TcpConn{}}
+	mut c := Client{}
 	if u.username == "" || h == "" {
 		return c
 	}

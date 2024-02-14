@@ -36,8 +36,6 @@ fn (mut api MessagramAPI) auth() vweb.Result
 	hwid     := api.query['hwid']     or { "" }
 
 	mut user 		:= db.User{}
-	mut trash		:= net.TcpConn{}
-	mut n_client 	:= server.Client{socket: &trash}
 
 	lock api.gram {
 		user = api.gram.find_profile(username)
@@ -45,8 +43,7 @@ fn (mut api MessagramAPI) auth() vweb.Result
 
 	if user.validate_login(username, password) {
 		lock api.gram {
-			n_client = server.new_client(mut user, password, hwid) 
-			api.gram.server.clients << n_client
+			api.gram.server.clients << server.new_client(mut user, password, hwid) 
 		}
 		return api.text("${n_client.sid}")
 	}
