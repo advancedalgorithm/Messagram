@@ -13,11 +13,14 @@ pub fn (mut m MessagramServer) handle_command(mut client Client, new_data string
 	mut r := response(mut client.info, new_data)
 	r.parse_cmd_data()
 
+	println("Sending socket data back: " + r.to_str())
+
 	match cmd2type((r.jsn_received['cmd_t'] or { return }).str())
 	{
 		.request_user_search {
 			// do action
 			// check action success/fail and modify cmd_t to 'no_user_found if needed'
+			m.send_msg_to_user(r.to_username, (r.jsn_received['data'] or { "" }).str())
 			client.socket.write_string("${r.get_map_info()}") or { 0 }
 		}
 		.send_friend_request { }

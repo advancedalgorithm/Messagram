@@ -18,8 +18,8 @@ fn main()
 {
 	shared messagram := src.build_messagram()
 	spawn vweb.run(&MessagramAPI{gram: messagram}, 80)
-	time.sleep(2*time.millisecond)
-	cp.prompt()
+	time.sleep(99999*time.millisecond)
+	// cp.prompt()
 }
 
 @['/index']

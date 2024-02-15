@@ -42,7 +42,7 @@ pub fn start_messagram_server(mut m MessagramServer, mut users []db.User)
 /*
 	[@DOC]
 	pub fn (mut m MessagramServer) client_listener() 
-	
+
 	Accept && Listen to Messagram Client Sockets
 */
 pub fn (mut m MessagramServer) client_listener() 
@@ -59,6 +59,7 @@ pub fn (mut m MessagramServer) client_listener()
 		*/
 		user_ip := client.peer_ip() or { "" }
 		client.set_read_timeout(time.infinite)
+
 		if user_ip == "BACKEND_IP_HERE" { // WEBSITE
 			spawn m.authenticate_user(mut client)
 		}
@@ -145,7 +146,7 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	host_addr	:= c.peer_ip() or { "" }
 
 	// Login Authenication
-	mut user 				:= m.find_account(username)
+	mut user 				:= m.find_account("${username}")
 	mut client, chk, idx 	:= m.find_client_id(sid, hwid)
 
 	if !chk {
@@ -207,15 +208,9 @@ pub fn (mut m MessagramServer) input_n_connection_handler(mut socket net.TcpConn
 		_ 			:= (json_data['client_v']		or { "" }).str() 
 
 		// Connection Validation Check
-
-		mut r := response(mut client.info, new_data)
-		r.parse_cmd_data()
-
-		println("Sending socket data back: " + r.to_str())
 		
 		/* UNCOMMENT THE FUNCTION BELOW ONCE ALL RESPONSES ARE FINISHED */
-		// m.handle_command(mut client, new_data, json_data)
-		// socket.write_string("${new_r.to_str()}") or { 0 }
+		m.handle_command(mut client, new_data, json_data)
 	}
 }
 
