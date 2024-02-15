@@ -40,7 +40,7 @@ pub enum Cmd_T
 	/* Friend Request Commands */
     send_friend_request					= 0x10007 // SEND A FRIEND REQUEST
     cancel_friend_request				= 0x10008 // CANCEL A FRIEND REQUEST
-	friend_request_sent					= 0x10009
+	friend_request_sent					= 0x10009 // 
 
 	/* DM Commands */
     send_dm_msg							= 0x10010 // SEND DM MESSAGE
@@ -102,37 +102,47 @@ pub enum Cmd_T
 	account_ban						= 0x10044
 	dm_msg_received					= 0x10045
 	community_msg_received			= 0x10046
+
+	request_user_search				= 0x10047
+	no_user_found					= 0x10048
 }
 
 pub struct Response
 {
 	pub mut:
+		/* 
+			This parser sends back the following 3 fields
+			for command response
+
+			status = Ping Check
+			Resp_T = Type Of Response (User_resp, Push_Event, Mass_Event)
+			Cmd_T = The Type Of Command that was successfully completed or failed
+		*/
 		status 			bool
 		resp_t 			Resp_T
 		cmd_t  			Cmd_T
 
+		/* 
+			The Following fields are additional data
+			to send to the receiver.
+		*/
 		from_username	db.User
 		to_username		string
 		to_community	db.Community
-		jsn_received 	map[string]jsn.Any
-		valid_action	bool
+		valid_action	bool 
 
-		data			string
+		/* The Generated Response For The Reciever */
+		data			map[string]string
+
+		/* Used for data checking */
+		jsn_received 	map[string]jsn.Any
+		users_list		[]db.User
 }
 
 pub fn response(mut u db.User, data string) Response
 {
 	json := (jsn.raw_decode("${data}") or { jsn.Any{} }).as_map()
 	return Response{cmd_t: cmd2type((json['cmd_t'] or { "" }).str()), jsn_received: json, from_username: u}
-}
-
-pub fn build_json_response(status bool, respt Resp_T, cmdt Cmd_T) Response
-{
-	return Response {
-		status: status,
-		resp_t: respt,
-		cmd_t: cmdt
-	}
 }
 
 pub fn resp2type(data string) Resp_T
@@ -205,12 +215,17 @@ pub fn cmd2type(data string) Cmd_T {
 	return Cmd_T._null
 }
 
-pub fn (mut r Response) parse_cmd_data() Response
+pub fn (mut r Response) parse_cmd_data()
 {
 	match r.cmd_t
 	{
 		.client_authentication {
-			return r.parse_client_auth()
+			r.parse_client_auth()
+			return
+		}
+		.request_user_search {
+			r.parse_user_search()
+			return
 		}
 		.add_sms_auth {
 			
@@ -228,26 +243,44 @@ pub fn (mut r Response) parse_cmd_data() Response
 			
 		}
 		.send_friend_request {
-			return r.parse_friend_req()
+			r.parse_friend_req()
+			return
 		}
 		.send_dm_msg {
-			return r.parse_send_dm_msg()
-		} else {} 
+			r.parse_send_dm_msg()
+			return
+		} else { return } 
 	}
 
-	return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_operation}
+	r.set_false_status(Cmd_T.invalid_operation)
 }
 
 pub fn (mut r Response) get_map_info() map[string]string
+{ return { "status": "${r.status.str()}", "resp_t": "${r.resp_t}", "cmd_t": "${r.cmd_t}" } }
+
+pub fn (mut r Response) to_str() string 
+{ return "${r.get_map_info()}" }
+
+pub fn (mut r Response) dm_key_validation() bool
 {
-	return {
-		"status": "${r.status.str()}",
-		"resp_t": "${r.resp_t}",
-		"cmd_t": "${r.cmd_t}"
-	}
+	if "to_username" in r.jsn_received && "from_username" in r.jsn_received 
+	{ return true }
+	return false
 }
 
-pub fn (mut r Response) to_str() string { return "${r.get_map_info()}" }
+pub fn (mut r Response) set_false_status(c Cmd_T)
+{
+	r.status = false
+	r.resp_t = Resp_T.user_resp
+	r.cmd_t = c
+}
+
+pub fn (mut r Response) set_success_status(c Cmd_T)
+{
+	r.status = true
+	r.resp_t = Resp_T.user_resp
+	r.cmd_t = c
+}
 
 
 /*
@@ -255,19 +288,42 @@ pub fn (mut r Response) to_str() string { return "${r.get_map_info()}" }
 *	Response Generating Function Below
 *
 */
-pub fn (mut r Response) parse_client_auth() Response
+pub fn (mut r Response) parse_client_auth()
 {
-	mut new_r := Response{cmd_t: cmd2type((r.jsn_received['cmd_t'] or { "" }).str())}
-	if new_r.cmd_t == ._null {
-		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_cmd}
+	// Only sending command back to the socket
+	if r.cmd_t == ._null {
+		r.set_false_status(Cmd_T.invalid_operation)
 	}
 
-	if r.cmd_t == .client_authentication { 
-		return Response{status: true, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.successful_login, data: "{\"status\": \"true\", \"resp_t\": \"${Resp_T.user_resp}\", \"cmd_t\": \"${Cmd_T.successful_login}\"}"}
+	r.set_success_status(Cmd_T.successful_login)
+}
+
+pub fn (mut r Response) parse_user_search() 
+{
+	if !r.dm_key_validation() {
+		r.set_false_status(Cmd_T.invalid_parameters)
 	}
 
-	
-	return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_operation}
+	mut u := db.User{}
+	for mut user in r.users_list 
+	{ if user.username == r.to_username { u = user } }
+
+	// No User Found
+	if u.username == "" {
+		r.set_false_status(Cmd_T.no_user_found)
+	}
+
+	r.status = true
+	r.resp_t = Resp_T.user_resp
+	r.cmd_t = Cmd_T.request_user_search
+
+	// TO-DO: Add the found users data in the json below
+	r.data = {
+		"status": "true",
+		"resp_t": "${Resp_T.user_resp}",
+		"cmd_t": "${Cmd_T.request_user_search}",
+		"data": ""
+	}
 }
 
 /*
@@ -277,42 +333,61 @@ pub fn (mut r Response) parse_client_auth() Response
 	Parsing the SEND_FRIEND_REQUEST Command to generate
 	a response for both sender and receiver
 */
-pub fn (mut r Response) parse_friend_req() Response
+pub fn (mut r Response) parse_friend_req()
 {
-	mut new_r := Response{cmd_t: cmd2type((r.jsn_received['cmd_t'] or { "" }).str())}
-	if new_r.cmd_t == ._null {
-		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_cmd}
+	if r.cmd_t == ._null {
+		r.set_false_status(Cmd_T.invalid_cmd)
+	} else if !r.dm_key_validation() {
+		r.set_false_status(Cmd_T.invalid_parameters)
 	}
 
-	
-	if "to_username" !in r.jsn_received || "from_username" !in r.jsn_received {
-		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_parameters}
+	r.set_success_status(Cmd_T.friend_request_sent)
+	r.data = {
+		"status": "true",
+		"resp_t": "${Resp_T.user_resp}",
+		"cmd_t": "${Cmd_T.send_friend_request}",
+		"from_username": "${r.jsn_received['from_username']}",
+		"to_username": "${r.jsn_received['to_username']}"
 	}
-
-	new_r.cmd_t = Cmd_T.friend_request_sent
-	new_r.jsn_received = r.jsn_received.clone()
-	new_r.resp_t = Resp_T.user_resp
-	new_r.valid_action = true
-
-	return new_r
+	r.valid_action = true
 }
 
-pub fn (mut r Response) parse_send_dm_msg() Response 
+pub fn (mut r Response) cancel_friend_request()  
 {
-
-	mut new_r := Response{cmd_t: cmd2type((r.jsn_received['cmd_t'] or { "" }).str())}
-	if new_r.cmd_t == ._null {
-		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_cmd}
+	if r.cmd_t == ._null {
+		r.set_false_status(Cmd_T.invalid_cmd)
+	} else if !r.dm_key_validation() {
+		r.set_false_status(Cmd_T.invalid_parameters)
 	}
 
-	if "from_username" in r.jsn_received || "to_username" in r.jsn_received || "data" in r.jsn_received {
-		r.data = "{\"status\": \"true\", \"resp_t\": \"${r.resp_t}\", \"cmd_t\": \"${r.cmd_t}\", \"from_username\": \"${r.jsn_received['from_username']}\", \"to_username\": \"${r.jsn_received['to_username']}\", \"data\": \"${r.jsn_received['data']}\"}"
-		new_r.resp_t = Resp_T.push_event
-		new_r.jsn_received = r.jsn_received.clone()
-		new_r.valid_action = true
+	r.set_success_status(Cmd_T.friend_request_sent)
+	r.data = {
+		"status": "true",
+		"resp_t": "${Resp_T.user_resp}",
+		"cmd_t": "${Cmd_T.cancel_friend_request}",
+		"from_username": "${r.jsn_received['from_username']}",
+		"to_username": "${r.jsn_received['to_username']}"
+	}
+	r.valid_action = true
+}
 
-		return new_r
+pub fn (mut r Response) parse_send_dm_msg() 
+{
+	if r.cmd_t == ._null {
+		r.set_success_status(Cmd_T.invalid_cmd)
+	} else if !r.dm_key_validation() || "data" !in r.jsn_received {
+		r.set_success_status(Cmd_T.invalid_parameters)
 	}
 
-	return Response{status: false, resp_t: Resp_T.push_event, cmd_t: Cmd_T.invalid_parameters}
+	r.set_success_status(Cmd_T.dm_sent) // can be modified
+	r.to_username = "${r.jsn_received['to_username']}"
+	r.data = {
+		"status": "true",
+		"resp_t": "${Resp_T.user_resp}",
+		"cmd_t": "${Cmd_T.dm_msg_received}",
+		"from_username": "${r.jsn_received['from_username']}",
+		"to_username": "${r.jsn_received['to_username']}",
+		"data": "${r.jsn_received['data']}"
+	}
+	r.valid_action = true
 }

@@ -42,10 +42,17 @@ import src.db_utils as db
 
 fn main() 
 {
+
+	args := os.args.clone()
+
+	if args.len < 1 {
+		println("[ X ] Error, No arguments provided\r\nUsage: ${args[0]} <cmd_t>")
+		exit(0)
+	}
 	// Command coming into Messagram Server
 	// Using this new information to match the current Client
 	test := "	{
-			\"cmd_t\": \"send_friend_request\",
+			\"cmd_t\": \"${args[1]}\",
 			\"username\": \"Jeff\",
 			\"sid\": \"454353434353455\",
 			\"hwid\": \"GGG\",
@@ -81,13 +88,14 @@ fn main()
 	}
 
 	// Take the command, Break it down to set objects
-	mut r := server.response(mut c.info, test)
-
-	println("${r}")
+	mut r := server.response(mut c.info, test) // this goes back to client
 
 	// Generate a response with a signal for action validation procceding 
-	mut n := r.parse_cmd_data()
+	r.parse_cmd_data() // generated response for the user or community request has been sent to
 
-	println("${n.jsn_received}")
+	println("${r.to_str()}") // SENDING BACK TO CLIENT ON SOCKET
+	if r.valid_action {
+		println("${r.data}") // SEND TO OTHER USER
+	}
 	// output: {"cmd_t":"send_friend_request","username":"Jeff","sid":"454353434353455","hwid":"GGG","client_name":"CLIENT_NAME","client_version":"1.0.0","from_username":"Jeff","to_username":"vibe"}
 }

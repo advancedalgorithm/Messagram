@@ -11,15 +11,20 @@ import x.json2 as jsn
 pub fn (mut m MessagramServer) handle_command(mut client Client, new_data string, json_data map[string]jsn.Any)
 {
 	mut r := response(mut client.info, new_data)
-	mut new_r := r.parse_cmd_data()
+	r.parse_cmd_data()
 
-	match r.cmd_t 
+	match cmd2type((r.jsn_received['cmd_t'] or { return }).str())
 	{
+		.request_user_search {
+			// do action
+			// check action success/fail and modify cmd_t to 'no_user_found if needed'
+			client.socket.write_string("${r.get_map_info()}") or { 0 }
+		}
 		.send_friend_request { }
 		.cancel_friend_request { }
 		.send_dm_msg {
-			chk := m.send_msg_to_user(mut client, (json_data['to_username'] or { "" }).str(), (json_data['data'] or { "" }).str()) 
-			client.socket.write_string("{\"status\": \"true\", \"resp_t\": \"push_event\", \"cmd_t\": \"send_dm_msg\", \"from_username\": \"Jeff\", \"to_username\": \"vibe\", \"data\": \"gg\"}\n") or { 0 }
+			chk := m.send_msg_to_user((json_data['to_username'] or { "" }).str(), (json_data['data'] or { "" }).str()) 
+			client.socket.write_string("${r.data}") or { 0 }
 			if !chk { 
 				println("ERROR: MESSAGE DIDNT SEND")
 				// Send the socket another message using Cmd_T.invalid_operation && Resp_T.user_resp or Resp_T.push_event [OPTIONAL]

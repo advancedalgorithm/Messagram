@@ -151,9 +151,9 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	println("[ + ] Client's Socket Updated\r\n\t=> ${m.list_all_socket()}")
 
 	mut r := response(mut client.info, login)
-	mut new_resp := r.parse_cmd_data()
+	r.parse_cmd_data()
 
-	c.write_string("{\"status\": \"true\", \"resp_t\": \"user_resp\", \"cmd_t\": \"SUCCESSFUL_LOGIN\"}") or { 0 }
+	c.write_string("${r.data}") or { 0 }
 	m.input_n_connection_handler(mut c, mut client)
 }
 
@@ -187,19 +187,19 @@ pub fn (mut m MessagramServer) input_n_connection_handler(mut socket net.TcpConn
 		}
 
 		json_data 	:= (jsn.raw_decode(new_data) 	or { jsn.Any{} }).as_map()
-		cmd 		:= (json_data['cmd_t'] 			or { "" }).str()
-		username 	:= (json_data['username'] 		or { "" }).str()
-		sid 		:= (json_data['sessionID'] 		or { "" }).str()
-		hwid 		:= (json_data['hwid'] 			or { "" }).str() 
-		client_name	:= (json_data['client_name']	or { "" }).str()
-		client_v	:= (json_data['client_v']		or { "" }).str() 
+		_ := (json_data['cmd_t'] 			or { "" }).str()
+		_ := (json_data['username'] 		or { "" }).str()
+		_ := (json_data['sessionID'] 		or { "" }).str()
+		_ := (json_data['hwid'] 			or { "" }).str() 
+		_ := (json_data['client_name']	or { "" }).str()
+		_ := (json_data['client_v']		or { "" }).str() 
 
 		// Connection Validation Check
 
 		mut r := response(mut client.info, new_data)
-		mut new_r := r.parse_cmd_data()
+		r.parse_cmd_data()
 
-		println("Sending socket data back: " + new_r.to_str())
+		println("Sending socket data back: " + r.to_str())
 		
 		/* UNCOMMENT THE FUNCTION BELOW ONCE ALL RESPONSES ARE FINISHED */
 		// m.handle_command(mut client, new_data, json_data)
@@ -207,13 +207,19 @@ pub fn (mut m MessagramServer) input_n_connection_handler(mut socket net.TcpConn
 	}
 }
 
-pub fn (mut m MessagramServer) send_msg_to_user(mut from_client Client, to_username string, data string) bool
+/*
+	[@DOC]
+	pub fn (mut m MessagramServer) send_msg_to_user(to_username string, data string) bool
+
+	Sending a DM Msg to another Messagram user in JSON syntax
+*/
+pub fn (mut m MessagramServer) send_msg_to_user(to_username string, data string) bool
 {
 	mut c := 0
 	for mut client in m.clients 
 	{
 		if client.info.username == to_username { 
-			m.clients[c].socket.write_string("{\"status\": \"true\", \"resp_t\": \"push_event\", \"cmd_t\": \"send_dm_msg\", \"from_username\": \"Jeff\", \"to_username\": \"vibe\", \"data\": \"${data}\"}\n")	 or { 0 }
+			m.clients[c].socket.write_string(data)	 or { 0 }
 			return true
 		}
 		c++
