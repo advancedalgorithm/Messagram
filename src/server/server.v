@@ -39,6 +39,12 @@ pub fn start_messagram_server(mut m MessagramServer, mut users []db.User)
 	m.client_listener()
 }
 
+/*
+	[@DOC]
+	pub fn (mut m MessagramServer) client_listener() 
+	
+	Accept && Listen to Messagram Client Sockets
+*/
 pub fn (mut m MessagramServer) client_listener() 
 {
 	for {
@@ -61,10 +67,16 @@ pub fn (mut m MessagramServer) client_listener()
 }
 
 /*
-* USE FOR API ENDPOINT
-*
-* Authorize user then generate a sessionID for user on the API Endpoint
-*
+	[@DOC]
+	pub fn (mut m MessagramServer) authenticate_user(mut c net.TcpConn)
+	
+	USE FOR API AUTH ENDPOINT
+
+	TO-DO #1: Authorize user then generate a sessionID for user on the API Endpoint
+
+	Note: This function was gonna be used from an API Endpoint using 
+ 		   TCP Socket to connect and authorize but i dont know if i 
+		   want to do it that way
 */
 pub fn (mut m MessagramServer) authenticate_user(mut c net.TcpConn)
 {
@@ -187,12 +199,12 @@ pub fn (mut m MessagramServer) input_n_connection_handler(mut socket net.TcpConn
 		}
 
 		json_data 	:= (jsn.raw_decode(new_data) 	or { jsn.Any{} }).as_map()
-		_ := (json_data['cmd_t'] 			or { "" }).str()
-		_ := (json_data['username'] 		or { "" }).str()
-		_ := (json_data['sessionID'] 		or { "" }).str()
-		_ := (json_data['hwid'] 			or { "" }).str() 
-		_ := (json_data['client_name']	or { "" }).str()
-		_ := (json_data['client_v']		or { "" }).str() 
+		_ 			:= (json_data['cmd_t'] 			or { "" }).str()
+		_ 			:= (json_data['username'] 		or { "" }).str()
+		_ 			:= (json_data['sessionID'] 		or { "" }).str()
+		_ 			:= (json_data['hwid'] 			or { "" }).str() 
+		_ 			:= (json_data['client_name']	or { "" }).str()
+		_ 			:= (json_data['client_v']		or { "" }).str() 
 
 		// Connection Validation Check
 
@@ -228,13 +240,18 @@ pub fn (mut m MessagramServer) send_msg_to_user(to_username string, data string)
 	return false
 }
 
+/*
+	[@DOC]
+	pub fn (mut m MessagramServer) list_all_socket() string
+
+	List all sockets connected to the socket
+*/
 pub fn (mut m MessagramServer) list_all_socket() string
 {
 	mut socket_list := ""
+	
 	for mut client in m.clients
-	{
-		socket_list += "${client.info.username} | ${client.socket}\n"
-	}
+	{ socket_list += "${client.info.username} | ${client.socket}\n" }
 
 	return socket_list
 }
@@ -250,9 +267,7 @@ pub fn (mut m MessagramServer) disconnect_user(mut socket net.TcpConn) bool
 	socket.close() or { 0 }
 
 	for i, client in m.clients 
-	{
-		if client.socket == socket { m.clients.delete(i) }
-	}
+	{ if client.socket == socket { m.clients.delete(i) } }
 
 	return true
 }
@@ -277,35 +292,16 @@ pub fn (mut m MessagramServer) find_client_id(sid string, h string) (Client, boo
 	return new, false, 0
 }
 
-pub fn (mut m MessagramServer) update_client_info(mut client Client, mut c net.TcpConn, client_name string, client_v string, mut user db.User) 
-{
-	for mut clnt in m.clients {
-		if client.info.username == user.username { 
-			clnt.socket 		= c
-			clnt.using_app 		= true
-			clnt.app_name 		= client_name
-			clnt.app_version 	= client_v
-			clnt.info 			= user
-		}
-	}
-}
-
 /* 
-	Find an account within Messagram's Database (NOT CONNECTED SOCKET CLIENTS)
+	[@DOC]
+	pub fn (mut m MessagramServer) find_account(username string) db.User
 	
-	Args:
-		- username: string
-	
-	Returns:
-		- User structure
+	Find an account in Messagram DB
 */
 pub fn (mut m MessagramServer) find_account(username string) db.User
 {
-	println("Searching... ${username}")
 	for mut user in m.users
-	{
-		if "${user.username}" == "${username}".trim_space() { return user }
-	}
+	{ if "${user.username}" == "${username}".trim_space() { return user } }
 
 	return db.User{}
 }

@@ -139,6 +139,15 @@ pub struct Response
 		users_list		[]db.User
 }
 
+/* 
+	[@DOC]
+	pub fn response(mut u db.User, data string) Response
+	pub fn resp2type(data string) Resp_T
+	pub fn cmd2type(data string) Cmd_T 
+	pub fn (mut r Response) parse_cmd_data()
+
+	Parsing && Object Setting
+*/
 pub fn response(mut u db.User, data string) Response
 {
 	json := (jsn.raw_decode("${data}") or { jsn.Any{} }).as_map()
@@ -162,7 +171,8 @@ pub fn resp2type(data string) Resp_T
 	return Resp_T._null
 }
 
-pub fn cmd2type(data string) Cmd_T {
+pub fn cmd2type(data string) Cmd_T 
+{
 	match data.to_lower() {
 		"client_authentication"				{ return Cmd_T.client_authentication }
 		"add_sms_auth"						{ return Cmd_T.add_sms_auth }
@@ -255,6 +265,16 @@ pub fn (mut r Response) parse_cmd_data()
 	r.set_false_status(Cmd_T.invalid_operation)
 }
 
+/*
+	[@DOC]
+	pub fn (mut r Response) get_map_info() map[string]string
+	pub fn (mut r Response) to_str() string
+	pub fn (mut r Response) dm_key_validation() bool
+	pub fn (mut r Response) set_false_status(c Cmd_T)
+	pub fn (mut r Response) set_success_status(c Cmd_T)
+
+	Get/Set/Check struct fields value Functions
+*/
 pub fn (mut r Response) get_map_info() map[string]string
 { return { "status": "${r.status.str()}", "resp_t": "${r.resp_t}", "cmd_t": "${r.cmd_t}" } }
 
@@ -284,9 +304,14 @@ pub fn (mut r Response) set_success_status(c Cmd_T)
 
 
 /*
-*
-*	Response Generating Function Below
-*
+	[@DOC]
+	pub fn (mut r Response) parse_client_auth()
+	pub fn (mut r Response) parse_user_search() 
+	pub fn (mut r Response) parse_friend_req()
+	pub fn (mut r Response) cancel_friend_request()
+	pub fn (mut r Response) parse_send_dm_msg() 
+
+	Response Generating Function Below
 */
 pub fn (mut r Response) parse_client_auth()
 {
@@ -326,13 +351,6 @@ pub fn (mut r Response) parse_user_search()
 	}
 }
 
-/*
-	[@DOC]
-	pub fn (mut r Response) parse_friend_req() Response
-
-	Parsing the SEND_FRIEND_REQUEST Command to generate
-	a response for both sender and receiver
-*/
 pub fn (mut r Response) parse_friend_req()
 {
 	if r.cmd_t == ._null {
@@ -352,7 +370,7 @@ pub fn (mut r Response) parse_friend_req()
 	r.valid_action = true
 }
 
-pub fn (mut r Response) cancel_friend_request()  
+pub fn (mut r Response) cancel_friend_request()
 {
 	if r.cmd_t == ._null {
 		r.set_false_status(Cmd_T.invalid_cmd)
