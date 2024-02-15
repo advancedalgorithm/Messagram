@@ -11,6 +11,10 @@ import src.db_utils as db
 	The parser relys on the current Client Information and new 
 	information via JSON data. Client's Account && Connection
 	information must be the same every request.
+
+	Keep in mind, This is not an open-source library for the public 
+	to use by providing validations. It was created to do whats 
+	need for the Messagram Server!
 */
 
 /*
