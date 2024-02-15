@@ -40,30 +40,31 @@ pub enum Cmd_T
 	/* Friend Request Commands */
     send_friend_request					= 0x10007 // SEND A FRIEND REQUEST
     cancel_friend_request				= 0x10008 // CANCEL A FRIEND REQUEST
+	friend_request_sent					= 0x10009
 
 	/* DM Commands */
-    send_dm_msg							= 0x10009 // SEND DM MESSAGE
-    send_dm_msg_rm						= 0x10010 // SEND DM MESSAGE REMOVAL
-    send_dm_reaction					= 0x10011 // SEND DM REACTION
-    send_dm_react_rm					= 0x10012 // SEND DM REACTION REMOVAL
+    send_dm_msg							= 0x10010 // SEND DM MESSAGE
+    send_dm_msg_rm						= 0x10011 // SEND DM MESSAGE REMOVAL
+    send_dm_reaction					= 0x10012 // SEND DM REACTION
+    send_dm_react_rm					= 0x10013 // SEND DM REACTION REMOVAL
 
 	/* Community Commands */
-	create_community					= 0x10013 // CREATE A COMMUNITY (LIKE A DISCORD SERVER)
-	edit_community		 				= 0x10014 // Edit Community Info/Settings (EDIT A COMMUNITY SETTINGS OR INFO)
-	inv_toggle							= 0x10015 // Enable/Disable Community Invites (EDIT THE INVITE TOGGLE)
-	kick_user							= 0x10016 // Kick a user from the community
-	ban_user							= 0x10017 // Ban a user from the community
-	del_msg								= 0x10018 // Delete a message from the community chat
+	create_community					= 0x10014 // CREATE A COMMUNITY (LIKE A DISCORD SERVER)
+	edit_community		 				= 0x10015 // Edit Community Info/Settings (EDIT A COMMUNITY SETTINGS OR INFO)
+	inv_toggle							= 0x10016 // Enable/Disable Community Invites (EDIT THE INVITE TOGGLE)
+	kick_user							= 0x10017 // Kick a user from the community
+	ban_user							= 0x10018 // Ban a user from the community
+	del_msg								= 0x10019 // Delete a message from the community chat
 
 	/* Roles */
-	create_community_role				= 0x10019 // CREATE A ROLE
-	edit_community_role					= 0x10020 // EDIT A ROLE (Perms, Color, Rank Level)
-	del_community_role					= 0x10021 // DELETE A ROLE
+	create_community_role				= 0x10020 // CREATE A ROLE
+	edit_community_role					= 0x10021 // EDIT A ROLE (Perms, Color, Rank Level)
+	del_community_role					= 0x10022 // DELETE A ROLE
 
 	/* Chats */
-	create_community_chat				= 0x10022 // CREATE A NEW CHAT
-	edit_community_chat					= 0x10023 // EDIT THE CHAT SETTINGS (Perms, Name, Desc)
-	del_community_chat					= 0x10024 // DELETE THE CHAT
+	create_community_chat				= 0x10023 // CREATE A NEW CHAT
+	edit_community_chat					= 0x10024 // EDIT THE CHAT SETTINGS (Perms, Name, Desc)
+	del_community_chat					= 0x10025 // DELETE THE CHAT
 
 	/*
 	*	Commands to send to clients
@@ -74,33 +75,33 @@ pub enum Cmd_T
 	*/
 
 	/* GENERAL REQUEST OPERATIONS */
-	invalid_cmd						= 0x10025 // INVALID COMMAND
-	invalid_parameters				= 0x10026 // INVALID PARAMETERS PROVIDED (JSON KEY/VALUES)
-	invalid_perm					= 0x10027 // INVALID PERMS
-	invalid_operation				= 0x10028
+	invalid_cmd						= 0x10026 // INVALID COMMAND
+	invalid_parameters				= 0x10027 // INVALID PARAMETERS PROVIDED (JSON KEY/VALUES)
+	invalid_perm					= 0x10028 // INVALID PERMS
+	invalid_operation				= 0x10029
 
-	successful_login				= 0x10029
-	invalid_login_info				= 0x10030
-	account_perm_ban				= 0x10031
-	account_temp_ban				= 0x10032
-	force_confirm_email				= 0x10033
-	force_device_trust				= 0x10034
-	force_add_phone_number_request	= 0x10035
-	verify_pin_code					= 0x10036
-	verify_sms_code					= 0x10037
+	successful_login				= 0x10030
+	invalid_login_info				= 0x10031
+	account_perm_ban				= 0x10032
+	account_temp_ban				= 0x10033
+	force_confirm_email				= 0x10034
+	force_device_trust				= 0x10035
+	force_add_phone_number_request	= 0x10036
+	verify_pin_code					= 0x10037
+	verify_sms_code					= 0x10038
 
 	/* FAILED FRIEND REQUEST OPERATIONS */
-	failed_to_send_friend_request	= 0x10038
-	blocked_by_user					= 0x10039
+	failed_to_send_friend_request	= 0x10039
+	blocked_by_user					= 0x10040
 
 	/* FAILED DM OPERATIONS */
-	dm_sent							= 0x10040
-	dm_failed						= 0x10041
+	dm_sent							= 0x10041
+	dm_failed						= 0x10042
 	/* FAILED COMMUNITY OPERATIONS */
-	invalid_role_perm				= 0x10042
-	account_ban						= 0x10043
-	dm_msg_received					= 0x10044
-	community_msg_received			= 0x10045
+	invalid_role_perm				= 0x10043
+	account_ban						= 0x10044
+	dm_msg_received					= 0x10045
+	community_msg_received			= 0x10046
 }
 
 pub struct Response
@@ -110,19 +111,19 @@ pub struct Response
 		resp_t 			Resp_T
 		cmd_t  			Cmd_T
 
-		from_user		db.User
-		to_user			db.User
+		from_username	db.User
+		to_username		string
 		to_community	db.Community
-		jsn_info 		map[string]jsn.Any
+		jsn_received 	map[string]jsn.Any
 		valid_action	bool
 
 		data			string
 }
 
-pub fn parse_cmd(mut u db.User, data string) Response
+pub fn response(mut u db.User, data string) Response
 {
 	json := (jsn.raw_decode("${data}") or { jsn.Any{} }).as_map()
-	return Response{cmd_t: cmd2type((json['cmd_t'] or { "" }).str()), jsn_info: json, from_user: u}
+	return Response{cmd_t: cmd2type((json['cmd_t'] or { "" }).str()), jsn_received: json, from_username: u}
 }
 
 pub fn build_json_response(status bool, respt Resp_T, cmdt Cmd_T) Response
@@ -152,7 +153,6 @@ pub fn resp2type(data string) Resp_T
 }
 
 pub fn cmd2type(data string) Cmd_T {
-	println(data)
 	match data.to_lower() {
 		"client_authentication"				{ return Cmd_T.client_authentication }
 		"add_sms_auth"						{ return Cmd_T.add_sms_auth }
@@ -162,6 +162,7 @@ pub fn cmd2type(data string) Cmd_T {
 		"send_email_verification_code" 		{ return Cmd_T.send_email_verification_code }
 		"send_friend_request"				{ return Cmd_T.send_friend_request }
 		"cancel_friend_request"				{ return Cmd_T.cancel_friend_request }
+		"friend_request_sent"				{ return Cmd_T.friend_request_sent }
 		"send_dm_msg" 						{ return Cmd_T.send_dm_msg }
 		"send_dm_msg_rm" 					{ return Cmd_T.send_dm_msg_rm }
 		"send_dm_reaction" 					{ return Cmd_T.send_dm_reaction }
@@ -248,9 +249,15 @@ pub fn (mut r Response) get_map_info() map[string]string
 
 pub fn (mut r Response) to_str() string { return "${r.get_map_info()}" }
 
+
+/*
+*
+*	Response Generating Function Below
+*
+*/
 pub fn (mut r Response) parse_client_auth() Response
 {
-	mut new_r := Response{cmd_t: cmd2type((r.jsn_info['cmd_t'] or { "" }).str())}
+	mut new_r := Response{cmd_t: cmd2type((r.jsn_received['cmd_t'] or { "" }).str())}
 	if new_r.cmd_t == ._null {
 		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_cmd}
 	}
@@ -265,23 +272,26 @@ pub fn (mut r Response) parse_client_auth() Response
 
 /*
 	[@DOC]
-	fn (mut r Response) parse_friend_req() Response
+	pub fn (mut r Response) parse_friend_req() Response
 
-	Parsing the SEND_FRIEND_REQUEST Command!
+	Parsing the SEND_FRIEND_REQUEST Command to generate
+	a response for both sender and receiver
 */
 pub fn (mut r Response) parse_friend_req() Response
 {
-	mut new_r := Response{cmd_t: cmd2type((r.jsn_info['cmd_t'] or { "" }).str())}
+	mut new_r := Response{cmd_t: cmd2type((r.jsn_received['cmd_t'] or { "" }).str())}
 	if new_r.cmd_t == ._null {
 		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_cmd}
 	}
 
 	
-	if "to_username" !in r.jsn_info {
+	if "to_username" !in r.jsn_received || "from_username" !in r.jsn_received {
 		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_parameters}
 	}
 
-	new_r.jsn_info = r.jsn_info.clone()
+	new_r.cmd_t = Cmd_T.friend_request_sent
+	new_r.jsn_received = r.jsn_received.clone()
+	new_r.resp_t = Resp_T.user_resp
 	new_r.valid_action = true
 
 	return new_r
@@ -290,15 +300,15 @@ pub fn (mut r Response) parse_friend_req() Response
 pub fn (mut r Response) parse_send_dm_msg() Response 
 {
 
-	mut new_r := Response{cmd_t: cmd2type((r.jsn_info['cmd_t'] or { "" }).str())}
+	mut new_r := Response{cmd_t: cmd2type((r.jsn_received['cmd_t'] or { "" }).str())}
 	if new_r.cmd_t == ._null {
 		return Response{status: false, resp_t: Resp_T.user_resp, cmd_t: Cmd_T.invalid_cmd}
 	}
 
-	if "from_username" in r.jsn_info || "to_username" in r.jsn_info || "data" in r.jsn_info {
-		r.data = "{\"status\": \"true\", \"resp_t\": \"${r.resp_t}\", \"cmd_t\": \"${r.cmd_t}\", \"from_username\": \"${r.jsn_info['from_username']}\", \"to_username\": \"${r.jsn_info['to_username']}\", \"data\": \"${r.jsn_info['data']}\"}"
+	if "from_username" in r.jsn_received || "to_username" in r.jsn_received || "data" in r.jsn_received {
+		r.data = "{\"status\": \"true\", \"resp_t\": \"${r.resp_t}\", \"cmd_t\": \"${r.cmd_t}\", \"from_username\": \"${r.jsn_received['from_username']}\", \"to_username\": \"${r.jsn_received['to_username']}\", \"data\": \"${r.jsn_received['data']}\"}"
 		new_r.resp_t = Resp_T.push_event
-		new_r.jsn_info = r.jsn_info.clone()
+		new_r.jsn_received = r.jsn_received.clone()
 		new_r.valid_action = true
 
 		return new_r

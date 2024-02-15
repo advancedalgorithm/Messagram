@@ -56,7 +56,7 @@ pub enum TrustSystems_T
 	pin_code		= 0x0000011
 	email 		  	= 0x0000012
 	phone 		  	= 0x0000013
-	authenticator 		= 0x0000014
+	authenticator 	= 0x0000014
 }
 
 /*

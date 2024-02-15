@@ -35,6 +35,7 @@ fn (mut api MessagramAPI) auth() vweb.Result
 	password := api.query['password'] or { "" }
 	hwid     := api.query['hwid']     or { "" }
 
+	mut client		:= server.Client{}
 	mut user 		:= db.User{}
 
 	lock api.gram {
@@ -43,9 +44,10 @@ fn (mut api MessagramAPI) auth() vweb.Result
 
 	if user.validate_login(username, password) {
 		lock api.gram {
-			api.gram.server.clients << server.new_client(mut user, password, hwid) 
+			client = server.new_client(mut user, password, hwid) 
+			api.gram.server.clients << client
 		}
-		return api.text("${n_client.sid}")
+		return api.text("${client.sid}")
 	}
 
 	return api.text("[ X ] Error, Unable to find account...!")
