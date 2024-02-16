@@ -186,8 +186,8 @@ pub fn (mut m MessagramServer) input_n_connection_handler(mut socket net.TcpConn
 	for
 	{
 		new_data := reader.read_line() or {
-			println("[ X ] ${m.clients.len} Error, Client disconnected from socket\r\n\t=>${client.info.username}.....!")
 			m.disconnect_user(mut client.socket)
+			println("[ X ] ${m.clients.len} Error, Client disconnected from socket\r\n\t=>${client.info.username}.....!")
 			return
 		}
 
@@ -225,8 +225,9 @@ pub fn (mut m MessagramServer) send_msg_to_user(to_username string, data string)
 	mut c := 0
 	for mut client in m.clients 
 	{
-		if client.info.username == to_username { 
-			m.clients[c].socket.write_string(data)	 or { 0 }
+		if client.info.username == to_username {
+			println("\x1b[34mMessage Sender\x1b[39m\n\t=> ${m.clients[c].info.username} ${data}")
+			m.clients[c].socket.write_string("${data}\n") or { 0 }
 			return true
 		}
 		c++
