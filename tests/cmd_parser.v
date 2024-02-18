@@ -93,9 +93,13 @@ fn main()
 	// Generate a response with a signal for action validation procceding 
 	r.parse_cmd_data() // generated response for the user or community request has been sent to
 
-	println("${r.to_str()}") // SENDING BACK TO CLIENT ON SOCKET
 	if r.valid_action {
+		// do action in thread
 		println("${r.data}") // SEND TO OTHER USER
 	}
+
+	// modify r.cmd_t to 'Cmd_T.invalid_operation' if the action wasnt successfully done how the user requested!
+	
+	println("${r.to_str()}") // SENDING BACK TO CLIENT ON SOCKET
 	// output: {"cmd_t":"send_friend_request","username":"Jeff","sid":"454353434353455","hwid":"GGG","client_name":"CLIENT_NAME","client_version":"1.0.0","from_username":"Jeff","to_username":"vibe"}
 }

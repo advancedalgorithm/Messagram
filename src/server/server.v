@@ -146,7 +146,7 @@ pub fn (mut m MessagramServer) client_authenticator(mut c net.TcpConn)
 	host_addr	:= c.peer_ip() or { "" }
 
 	// Login Authenication
-	mut user 				:= m.find_account("${username}")
+	mut user 				:= m.find_account(&username)
 	mut client, chk, idx 	:= m.find_client_id(sid, hwid)
 
 	if !chk {

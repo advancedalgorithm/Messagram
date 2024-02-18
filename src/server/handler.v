@@ -13,6 +13,7 @@ pub fn (mut m MessagramServer) handle_command(mut client Client, new_data string
 	mut r := response(mut client.info, new_data)
 	r.parse_cmd_data()
 
+	println("Command Received: ${r.jsn_received}")
 	println("Sending socket data back: " + r.to_str())
 
 	match cmd2type((r.jsn_received['cmd_t'] or { return }).str())

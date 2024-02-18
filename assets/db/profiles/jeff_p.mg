@@ -21,17 +21,15 @@
     PSN:
     XBOX:
     PAYPAL: DevJeffery
-}
-
-[@STATUS]
-{
-    Messagram Dev | messagram.io
-}
-
-[@BIO]
-{
-    CEO/Software Engineer @ Messagram
-    github.com/AdvancedAlgorithm
+    [@STATUS]
+    {
+        Messagram Dev | messagram.io
+    }
+    [@BIO]
+    {
+        CEO/Software Engineer @ Messagram
+        github.com/AdvancedAlgorithm
+    }
 }
 
 [@COMMUNITIES]

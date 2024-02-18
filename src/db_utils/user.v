@@ -3,8 +3,7 @@ module db_utils
 import rand
 import crypto.bcrypt
 
-import src.utils
-
+import src.db_utils
 pub struct User
 {
 	pub mut:
@@ -32,6 +31,9 @@ pub struct User
 
 		// 2D Array [ PC_NAME: [] ]
 		trusted_systems		map[string][]string
+
+		communities			[]Community
+		dms 				[]DM
 }
 
 /*
@@ -72,7 +74,7 @@ pub fn user(content string, new bool) User
 	id := content.int()
 
 	if new {
-		return create(mut u, utils.rm_str(content, ['(', ')', '\'']).split(","))
+		return create(utils.rm_str(content, ['(', ')', '\'']).split(","))
 	}
 
 	return User{}
@@ -85,7 +87,7 @@ pub fn user(content string, new bool) User
 
 	Used to create a new User Struct with information
 */
-pub fn create(mut u User, arr []string) User 
+pub fn create(arr []string) User 
 {
 	// ('USER_ID','USERNAME','EMAIL','PASSWORD','IP_ADDR','NO_PHONE','ACCOUNT_PIN_CODE','MESSAGRAM_RANK_INT')
 	if arr.len != 8 {
@@ -119,6 +121,35 @@ pub fn create(mut u User, arr []string) User
 	}
 
 	return new_u
+}
+
+pub fn (mut u User) parse_user_file() 
+{
+	profile_data := os.read_lines("assets/db/profiles/${u.username}_p.mg") or { [] }
+
+	if profile_data == [] { return }
+
+	for line in profile_data {
+		match line {
+			"DEFAULT_IMG" { }
+			"BANNER_IMAGE" { }
+			"MEMBER_SINCE" { }
+			"BADGES" { }
+			"DISCORD" { }
+			"X" { }
+			"TIKTOK" { }
+			"TWITCH" { }
+			"YOUTUBE" { }
+			"FACEBOOK" { }
+			"INSTAGRAM" { }
+			"SPOTIFY" { }
+			"REDDIT" { }
+		}
+	}
+
+	mut data := get_block_data(profile_data, "[@STATUS]")
+	mut bio := get_block_data(profile_data, "[@BIO]")
+	mut roles := get_block_data(profile_data, "[@COMMUNITIES]")
 }
 
 /*
@@ -169,7 +200,6 @@ pub fn (mut u User) validate_login(uname string, pword string) bool
 
 /*
 	[@DOC]
-
 	is_2fa_on() bool
 
 	return weather the 2fa option is on when an email, phone or authenicator is linked
@@ -178,7 +208,6 @@ pub fn (mut u User) is_2fs_on() bool { return u.twofa_toggle }
 
 /*
 	[@DOC]
-
 	add_trust_sys(trust_t TrustSystems_T, trust_data string)
 
 	adds a source for protection such as 2fa
@@ -197,6 +226,32 @@ pub fn (mut u User) add_trust_sys(trust_t TrustSystems_T, trust_data string)
 
 		} else {}
 	}
+}
+
+/*
+	[@DOC]
+	pub fn get_block_data(content []string, block string) string
+
+	Grab a block of data from user's account file in DB dir
+*/
+pub fn get_block_data(content []string, block string) string
+{
+	mut data := ""
+	mut start := false
+	for line in content
+	{
+		if line.trim_space() == block {
+			start = true
+			continue
+		} else if line.trim_space() == "{" { continue }
+		else if start && line.trim_space() == "}" { break }
+
+		if start {
+			data += "${line.trim_space()}"
+		}
+	}
+
+	return data
 }
 
 /*

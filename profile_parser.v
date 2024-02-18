@@ -28,6 +28,7 @@ pub struct UserProfile
 	bio					string
 
 	communities			map[string][]string
+	dm					map[string]
 }
 
 fn main() 

@@ -18,7 +18,7 @@ fn main()
 {
 	shared messagram := src.build_messagram()
 	spawn vweb.run(&MessagramAPI{gram: messagram}, 80)
-	time.sleep(99999*time.millisecond)
+	time.sleep(time.infinite)
 	// cp.prompt()
 }
 
