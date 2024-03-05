@@ -21,7 +21,27 @@ pub struct User
 		pin_code			string
 		messa_rank			i64
 
-		hash                string
+		status 				string
+		bio					string
+
+		default_img 		string
+		banner_img 			string
+		member_since 		string
+		badges 				string
+
+		discord 			string
+		x					string
+		twitter				string
+		twitch 				string
+		youtube 			string
+		facebook 			string
+		instagram 			string
+		spotify 			string
+		reddit 				string
+		steam 				string
+		psn 				string
+		xbox 				string
+		paypal 				string
 
 		/*	
 			2FA Using Email and//or Phone Number
@@ -95,13 +115,15 @@ pub fn create(arr []string) User
 		return User{}
 	}
 
-	mut new_u := User{user_id: arr[0],
-		    username: arr[1],
-		    email: arr[2],
-		    password: arr[3],
-		    ip_addr: arr[4],
-		    sms_number: arr[5],
-		    pin_code: arr[6]}
+	mut new_u := User{	
+		user_id: 		arr[0],
+		username: 		arr[1],
+		email: 			arr[2],
+		password: 		arr[3],
+		ip_addr: 		arr[4],
+		sms_number: 	arr[5],
+		pin_code: 		arr[6] 
+	}
 
 	if arr[7].i64() > 0 {
 		new_u.messa_rank = arr[7].i64()
@@ -131,19 +153,32 @@ pub fn (mut u User) parse_user_file()
 
 	for line in profile_data {
 		match line {
-			"DEFAULT_IMG" { }
-			"BANNER_IMAGE" { }
-			"MEMBER_SINCE" { }
-			"BADGES" { }
-			"DISCORD" { }
-			"X" { }
-			"TIKTOK" { }
-			"TWITCH" { }
-			"YOUTUBE" { }
-			"FACEBOOK" { }
-			"INSTAGRAM" { }
-			"SPOTIFY" { }
-			"REDDIT" { }
+			"DEFAULT_IMG" 
+			{ u.default_img = line.trim_space().replace("DEFAULT:", "").trim_space() }
+			"BANNER_IMAGE" 
+			{ u.banner_img = line.trim_space().replace("BANNER:", "").trim_space() }
+			"MEMBER_SINCE" 
+			{ u.member_since = line.trim_space().replace("MEMBER_SINCE:", "").trim_space() }
+			"BADGES" 
+			{ u.badges = line.trim_space().replace("BADGES:", "").trim_space() }
+			"DISCORD" 
+			{ u.discord = line.trim_space().replace("DISCORD:", "").trim_space() }
+			"X" 
+			{ u.x = line.trim_space().replace("X:", "").trim_space() }
+			"TIKTOK" 
+			{ u.tiktok = line.trim_space().replace("TIKTOK:", "").trim_space() }
+			"TWITCH" 
+			{ u.twitch = line.trim_space().replace("TWITCH:", "").trim_space() }
+			"YOUTUBE" 
+			{ u.youtube = line.trim_space().replace("YOUTUBE:", "").trim_space() }
+			"FACEBOOK" 
+			{ u.facebook = line.trim_space().replace("FACEBOOK:", "").trim_space() }
+			"INSTAGRAM" 
+			{ u.instagram = line.trim_space().replace("INSTAGRAM:", "").trim_space() }
+			"SPOTIFY" 
+			{ u.spotify = line.trim_space().replace("SPOTIFY", "").trim_space() }
+			"REDDIT" 
+			{ u.reddit = line.trim_space().replace("REDDIT:", "").trim_space() }
 		}
 	}
 
